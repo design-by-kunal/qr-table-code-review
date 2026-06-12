@@ -55,6 +55,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.SecureRandom;
 import com.gulfnet.shared_library.util.CurrencyFormatter;
 import com.gulfnet.restaurantmanagement.config.RestaurantChainConfigProperties;
 import com.gulfnet.shared_library.enums.ChargeType;
@@ -77,7 +78,7 @@ public class RefundServiceImpl implements RefundService {
     private static final String ROLE_CASHIER = "CASHIER";
     private static final String ROLE_MANAGER = "MANAGER";
     private static final String MSG_REFUND_NOT_FOUND = "refund.not.found";
-    private static final java.util.Random GMO_REFUND_ID_RANDOM = new java.util.Random();
+    private static final SecureRandom GMO_REFUND_ID_RANDOM = new SecureRandom();
 
     private final RefundRepository refundRepository;
     private final RefundItemRepository refundItemRepository;
@@ -1259,8 +1260,7 @@ public class RefundServiceImpl implements RefundService {
      * Generate a 20-digit numeric refund ID for GMO (refund_id).
      */
     private String generateGmoRefundId() {
-        // Use a single Random instance and the original value (avoid Math.abs bias/overflow).
-        String base = String.valueOf(System.currentTimeMillis()) + String.valueOf(GMO_REFUND_ID_RANDOM.nextInt());
+        String base = String.valueOf(System.currentTimeMillis()) + GMO_REFUND_ID_RANDOM.nextInt();
         String numeric = base.replaceAll("\\D", "");
         if (numeric.length() < 20) {
             numeric = String.format("%-20s", numeric).replace(' ', '0');
