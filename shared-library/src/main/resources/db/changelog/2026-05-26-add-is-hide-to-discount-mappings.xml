@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-05-26-add-is-hide-menu-discount-mapping" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="menu_discount_mapping"/>
+                <not>
+                    <columnExists tableName="menu_discount_mapping" columnName="is_hide"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Add is_hide flag to menu_discount_mapping for hidden order discount assignments.</comment>
+
+        <addColumn tableName="menu_discount_mapping">
+            <column name="is_hide" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-05-26-add-is-hide-restaurant-discount-mapping" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_discount_mapping"/>
+                <not>
+                    <columnExists tableName="restaurant_discount_mapping" columnName="is_hide"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Add is_hide flag to restaurant_discount_mapping for hidden order discount assignments.</comment>
+
+        <addColumn tableName="restaurant_discount_mapping">
+            <column name="is_hide" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

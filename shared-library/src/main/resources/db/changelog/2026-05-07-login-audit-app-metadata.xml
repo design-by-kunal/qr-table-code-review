@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="2026-05-07-add-login-audit-app-metadata" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="login_audit"/>
+                <not>
+                    <and>
+                        <columnExists tableName="login_audit" columnName="app_type"/>
+                        <columnExists tableName="login_audit" columnName="app_version"/>
+                        <columnExists tableName="login_audit" columnName="last_seen_at"/>
+                    </and>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="login_audit">
+            <column name="app_type" type="varchar(50)"/>
+            <column name="app_version" type="varchar(100)"/>
+            <column name="last_seen_at" type="TIMESTAMPTZ"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
+

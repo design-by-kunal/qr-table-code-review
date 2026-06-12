@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Add valid_from column -->
+    <changeSet id="2025-09-12-1" author="shivani.poonia">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu_discount_mapping" columnName="valid_from"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_discount_mapping">
+            <column name="valid_from" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add valid_to column -->
+    <changeSet id="2025-09-12-2" author="shivani.poonia">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu_discount_mapping" columnName="valid_to"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_discount_mapping">
+            <column name="valid_to" type="timestamp(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add start_time column -->
+    <changeSet id="2025-09-12-3" author="shivani.poonia">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu_discount_mapping" columnName="start_time"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_discount_mapping">
+            <column name="start_time" type="time"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add end_time column -->
+    <changeSet id="2025-09-12-4" author="shivani.poonia">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu_discount_mapping" columnName="end_time"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_discount_mapping">
+            <column name="end_time" type="time"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add days_of_week column -->
+    <changeSet id="2025-09-12-5" author="shivani.poonia">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu_discount_mapping" columnName="days_of_week"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_discount_mapping">
+            <column name="days_of_week" type="text[]"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

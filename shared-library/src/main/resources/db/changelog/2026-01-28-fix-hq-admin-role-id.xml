@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-01-28-fix-hq-admin-user-and-role" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <tableExists tableName="role"/>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM role WHERE name = 'HQ_ADMIN'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>
+            Ensure HQ admin user exists and is mapped to HQ_ADMIN role by name (no hardcoded role_id).
+        </comment>
+
+        <sql>
+            -- Insert HQ admin user if missing (role_id resolved by role.name)
+            INSERT INTO users (
+                id,
+                contact_number,
+                created_at,
+                email,
+                employment_type,
+                first_name,
+                is_deleted,
+                is_status_locked,
+                language_code,
+                last_name,
+                password,
+                photo_url,
+                profile_update_request_status,
+                restaurant_id,
+                role_id,
+                status,
+                updated_at,
+                created_by,
+                updated_by,
+                user_code,
+                profile_update_request_data,
+                profile_update_requested_at,
+                profile_update_reviewed_at,
+                app_type,
+                device_token,
+                device_type,
+                photo_thumbnail_url
+            )
+            SELECT
+                'f9a963d6-4cc8-4739-bd50-d4c42f5c0811',
+                '9876598765',
+                '2026-01-19 10:01:35.044111'::timestamptz,
+                'shailesh.parkhi@joshsoftware.com',
+                'FULL_TIME',
+                'Shailesh',
+                FALSE,
+                FALSE,
+                'en',
+                'Parkhi',
+                '$2a$10$Vm1TAWNB89uz/17j0c6c6u9H/S8qUqjV0d39kGExr/Urm8pYW6aUS',
+                'https://qr-table-development.s3.ap-southeast-1.amazonaws.com/profile-images/employee/admin_images_1768816822656.png',
+                'NONE',
+                NULL,
+                (SELECT id FROM role WHERE name = 'HQ_ADMIN'),
+                'ACTIVE',
+                CURRENT_TIMESTAMP,
+                NULL,
+                NULL,
+                'ADMIN01',
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                NULL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM users WHERE email = 'shailesh.parkhi@joshsoftware.com'
+            );
+
+            -- If the user already exists, ensure role_id matches HQ_ADMIN by name
+            UPDATE users
+            SET role_id = (SELECT id FROM role WHERE name = 'HQ_ADMIN'),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE email = 'shailesh.parkhi@joshsoftware.com'
+              AND (
+                  role_id IS NULL OR
+                  role_id != (SELECT id FROM role WHERE name = 'HQ_ADMIN')
+              );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

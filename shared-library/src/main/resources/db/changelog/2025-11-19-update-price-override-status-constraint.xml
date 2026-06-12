@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-11-19-update-price-override-status-constraint" author="josh">
+        <validCheckSum>9:b8856ae46cf0b2fcc2b02789adc02cc6</validCheckSum>
+        <validCheckSum>9:d24863d889639bfc7fddb23f1726169e</validCheckSum>
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override"/>
+        </preConditions>
+        <comment>Update price_override status check constraint to allow new enum values: UNSCHEDULED, SCHEDULED, LIVE</comment>
+        <sql>
+            -- Drop the old constraint first so updates can succeed
+            ALTER TABLE price_override DROP CONSTRAINT IF EXISTS price_override_status_check;
+        </sql>
+        <sql>
+            -- Migrate existing ACTIVE status to LIVE
+            UPDATE price_override SET status = 'LIVE' WHERE status = 'ACTIVE';
+        </sql>
+        <sql>
+            -- Migrate existing INACTIVE status to UNSCHEDULED
+            UPDATE price_override SET status = 'UNSCHEDULED' WHERE status = 'INACTIVE';
+        </sql>
+        <sql>
+            -- Create new constraint with the new enum values
+            ALTER TABLE price_override 
+            ADD CONSTRAINT price_override_status_check 
+            CHECK (status IN ('UNSCHEDULED', 'SCHEDULED', 'LIVE'));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

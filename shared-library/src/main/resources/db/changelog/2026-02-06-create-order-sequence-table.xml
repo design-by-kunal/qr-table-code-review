@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="create-order-sequence-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="order_sequence"/>
+            </not>
+        </preConditions>
+        
+        <createTable tableName="order_sequence">
+            <column name="restaurant_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="effective_date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_value" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey
+            tableName="order_sequence"
+            columnNames="restaurant_id, order_type, effective_date"
+            constraintName="pk_order_sequence"/>
+    </changeSet>
+
+</databaseChangeLog>

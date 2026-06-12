@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Update audit_trail action_type constraint to include REQUEST_* action types -->
+    <changeSet id="2025-12-29-add-request-action-types-to-audit-trail-constraint" author="system">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="audit_trail"/>
+            <columnExists tableName="audit_trail" columnName="action_type"/>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) 
+                FROM information_schema.table_constraints 
+                WHERE constraint_schema = current_schema()
+                AND table_name = 'audit_trail'
+                AND constraint_name = 'audit_trail_action_type_check'
+                AND constraint_type = 'CHECK'
+            </sqlCheck>
+        </preConditions>
+        <comment>
+            Update audit_trail action_type constraint to include ALL ActionType enum values.
+            This ensures all action types used in the codebase are allowed in the database constraint.
+        </comment>
+        <sql>
+            -- Drop the existing constraint
+            ALTER TABLE audit_trail DROP CONSTRAINT IF EXISTS audit_trail_action_type_check;
+        </sql>
+        <sql>
+            -- Add updated constraint with ALL ActionType enum values included
+            ALTER TABLE audit_trail 
+            ADD CONSTRAINT audit_trail_action_type_check 
+            CHECK (action_type::text = ANY (ARRAY[
+                'LOGIN'::character varying::text, 
+                'LOGOUT'::character varying::text, 
+                'PAYMENT'::character varying::text, 
+                'REFUND'::character varying::text, 
+                'CANCELLATION'::character varying::text, 
+                'ORDER_MODIFICATION'::character varying::text,
+                'DISCOUNT'::character varying::text,
+                'DISCOUNT_CREATE'::character varying::text,
+                'DISCOUNT_UPDATE'::character varying::text,
+                'DISCOUNT_DELETE'::character varying::text,
+                'DISCOUNT_MODIFY'::character varying::text,
+                'DISCOUNT_ACTIVATE'::character varying::text,
+                'DISCOUNT_DEACTIVATE'::character varying::text,
+                'PROMOTION_CREATE'::character varying::text,
+                'PROMOTION_UPDATE'::character varying::text,
+                'PROMOTION_DELETE'::character varying::text,
+                'PROMOTION_MODIFY'::character varying::text,
+                'PROMOTION_ACTIVATE'::character varying::text,
+                'PROMOTION_DEACTIVATE'::character varying::text,
+                'RESTAURANT_CREATE'::character varying::text,
+                'RESTAURANT_UPDATE'::character varying::text,
+                'RESTAURANT_DELETE'::character varying::text,
+                'RESTAURANT_GROUP_CREATE'::character varying::text,
+                'RESTAURANT_GROUP_UPDATE'::character varying::text,
+                'RESTAURANT_GROUP_DELETE'::character varying::text,
+                'MENU_CREATE'::character varying::text,
+                'MENU_UPDATE'::character varying::text,
+                'MENU_DELETE'::character varying::text,
+                'MENU_PUBLISH'::character varying::text,
+                'MENU_UNPUBLISH'::character varying::text,
+                'MENU_ITEM_CREATE'::character varying::text,
+                'MENU_ITEM_UPDATE'::character varying::text,
+                'MENU_ITEM_DELETE'::character varying::text,
+                'CATEGORY_CREATE'::character varying::text,
+                'CATEGORY_UPDATE'::character varying::text,
+                'CATEGORY_DELETE'::character varying::text,
+                'MODIFIER_CREATE'::character varying::text,
+                'MODIFIER_UPDATE'::character varying::text,
+                'MODIFIER_DELETE'::character varying::text,
+                'PRICE_OVERRIDE_CREATE'::character varying::text,
+                'PRICE_OVERRIDE_UPDATE'::character varying::text,
+                'PRICE_OVERRIDE_DELETE'::character varying::text,
+                'TABLE_CREATE'::character varying::text,
+                'TABLE_UPDATE'::character varying::text,
+                'TABLE_DELETE'::character varying::text,
+                'SECTION_CREATE'::character varying::text,
+                'SECTION_UPDATE'::character varying::text,
+                'SECTION_DELETE'::character varying::text,
+                'TABLE_LAYOUT_TEMPLATE_CREATE'::character varying::text,
+                'TABLE_LAYOUT_TEMPLATE_UPDATE'::character varying::text,
+                'TABLE_LAYOUT_TEMPLATE_DELETE'::character varying::text,
+                'USER_CREATE'::character varying::text,
+                'USER_UPDATE'::character varying::text,
+                'USER_DELETE'::character varying::text,
+                'ROLE_CREATE'::character varying::text,
+                'ROLE_UPDATE'::character varying::text,
+                'ROLE_DELETE'::character varying::text,
+                'KDS_CREATE'::character varying::text,
+                'KDS_UPDATE'::character varying::text,
+                'KDS_DELETE'::character varying::text,
+                'SETTINGS_UPDATE'::character varying::text,
+                'EMPLOYEE_BULK_UPLOAD'::character varying::text,
+                'EMPLOYEE_STATUS_UPDATE'::character varying::text,
+                'TABLE_TRANSFER'::character varying::text,
+                'TABLE_BLOCK'::character varying::text,
+                'TABLE_UNBLOCK'::character varying::text,
+                'TABLE_MOVE_SECTION'::character varying::text,
+                'TABLE_CAPACITY_UPDATE'::character varying::text,
+                'TABLE_WAITER_ASSIGN'::character varying::text,
+                'TABLE_WAITER_UNASSIGN'::character varying::text,
+                'TABLE_QR_GENERATE'::character varying::text,
+                'TABLE_QR_PRINT'::character varying::text,
+                'REQUEST_CANCEL_ITEM_APPROVE'::character varying::text,
+                'REQUEST_CANCEL_ITEM_DECLINE'::character varying::text,
+                'REQUEST_CANCEL_TRANSACTION_APPROVE'::character varying::text,
+                'REQUEST_CANCEL_TRANSACTION_DECLINE'::character varying::text,
+                'REQUEST_ADDITIONAL_DISCOUNT_APPROVE'::character varying::text,
+                'REQUEST_ADDITIONAL_DISCOUNT_DECLINE'::character varying::text,
+                'REQUEST_REFUND_APPROVE'::character varying::text,
+                'REQUEST_REFUND_DECLINE'::character varying::text,
+                'REQUEST_PROFILE_UPDATE_APPROVE'::character varying::text,
+                'REQUEST_PROFILE_UPDATE_DECLINE'::character varying::text,
+                'ORDER_CANCEL'::character varying::text,
+                'ORDER_DISCOUNT_ADD'::character varying::text,
+                'ITEM_AVAILABILITY_UPDATE'::character varying::text,
+                'KDS_ASSIGNEE_ADD'::character varying::text,
+                'KDS_ASSIGNEE_REMOVE'::character varying::text,
+                'KDS_RESET_TIME_EXTEND'::character varying::text,
+                'REPORT_EXPORT'::character varying::text,
+                'SYSTEM_ACTION'::character varying::text
+            ]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

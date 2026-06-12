@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add kds_live_dashboard_reset_time column to restaurant table -->
+    <changeSet id="add-kds-live-dashboard-reset-time" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="restaurant" columnName="kds_live_dashboard_reset_time"/>
+            </not>
+        </preConditions>
+        <comment>Add kds_live_dashboard_reset_time column to restaurant table with TIMETZ for UTC timezone support</comment>
+        <addColumn tableName="restaurant">
+            <column name="kds_live_dashboard_reset_time" type="TIMETZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add cashier_live_dashboard_reset_time column to restaurant table -->
+    <changeSet id="add-cashier-live-dashboard-reset-time" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="restaurant" columnName="cashier_live_dashboard_reset_time"/>
+            </not>
+        </preConditions>
+        <comment>Add cashier_live_dashboard_reset_time column to restaurant table with TIMETZ for UTC timezone support</comment>
+        <addColumn tableName="restaurant">
+            <column name="cashier_live_dashboard_reset_time" type="TIMETZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Populate existing records with default time 03:00:00 UTC -->
+    <changeSet id="populate-dashboard-reset-times" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="restaurant" columnName="kds_live_dashboard_reset_time"/>
+            <columnExists tableName="restaurant" columnName="cashier_live_dashboard_reset_time"/>
+        </preConditions>
+        <comment>Populate existing restaurant records with default reset time 03:00:00 UTC</comment>
+        <sql>
+            UPDATE restaurant
+            SET kds_live_dashboard_reset_time = '03:00:00+00'::timetz,
+                cashier_live_dashboard_reset_time = '03:00:00+00'::timetz
+            WHERE kds_live_dashboard_reset_time IS NULL
+               OR cashier_live_dashboard_reset_time IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

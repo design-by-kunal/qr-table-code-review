@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Create shift_translation table -->
+    <changeSet id="2026-01-30-1-create-shift-translation-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="shift_translation"/>
+            </not>
+        </preConditions>
+        
+        <createTable tableName="shift_translation">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="shift_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language_code" type="varchar(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint
+            baseTableName="shift_translation"
+            baseColumnNames="shift_id"
+            constraintName="fk_shift_translation_shift"
+            referencedTableName="shift"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+        
+        <createIndex indexName="idx_shift_translation_shift_id" tableName="shift_translation">
+            <column name="shift_id"/>
+        </createIndex>
+        
+        <createIndex indexName="idx_shift_translation_language_code" tableName="shift_translation">
+            <column name="language_code"/>
+        </createIndex>
+        
+        <addUniqueConstraint
+            tableName="shift_translation"
+            columnNames="shift_id, language_code"
+            constraintName="uk_shift_translation_shift_language"/>
+    </changeSet>
+
+    <!-- Migrate existing shift_name data to shift_translation with default language 'en' -->
+    <changeSet id="2026-01-30-2-migrate-shift-name-to-translation" author="system">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="shift"/>
+                <tableExists tableName="shift_translation"/>
+                <columnExists tableName="shift" columnName="shift_name"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM shift_translation
+                </sqlCheck>
+            </and>
+        </preConditions>
+        
+        <sql>
+            INSERT INTO shift_translation (id, shift_id, language_code, name)
+            SELECT 
+                gen_random_uuid(),
+                id,
+                'en',
+                shift_name
+            FROM shift
+            WHERE shift_name IS NOT NULL AND shift_name != '';
+        </sql>
+    </changeSet>
+
+    <!-- Drop shift_name column from shift table -->
+    <changeSet id="2026-01-30-3-drop-shift-name-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="shift" columnName="shift_name"/>
+        </preConditions>
+        
+        <dropColumn tableName="shift" columnName="shift_name"/>
+    </changeSet>
+
+</databaseChangeLog>

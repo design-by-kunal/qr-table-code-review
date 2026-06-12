@@ -1,0 +1,25 @@
+package com.gulfnet.shared_library.model.response.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class TableBlockResponse {
+    
+    private UUID tableId;
+    private String tableOrder;
+    private String previousStatus;
+    private String currentStatus;
+    private String reason;
+    private String notes;
+    private String blockedBy;
+    private LocalDateTime blockedAt;
+}

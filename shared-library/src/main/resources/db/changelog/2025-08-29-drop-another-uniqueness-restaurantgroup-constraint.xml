@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.31.xsd">
+
+    <changeSet id="2025-08-29-update-restaurantgroup-unique-constraint" author="shivani">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <indexExists indexName="uniq_restaurant_group_translation_name_ci" tableName="restaurant_group_translation"/>
+                <indexExists indexName="uniq_name_per_group_case_insensitive" tableName="restaurant_group_translation"/>
+            </or>
+        </preConditions>
+
+        <!-- Drop old indexes if they exist -->
+        <sql>
+            DROP INDEX IF EXISTS public.uniq_restaurant_group_translation_name_ci;
+        </sql>
+        <sql>
+            DROP INDEX IF EXISTS public.uniq_name_per_group_case_insensitive;
+        </sql>
+
+        <!-- Create new combined unique index (idempotent for already-initialized DBs) -->
+        <sql>
+            CREATE UNIQUE INDEX IF NOT EXISTS uniq_name_per_group_language_ci
+            ON public.restaurant_group_translation(restaurant_group_id, name, language_code);
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>

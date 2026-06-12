@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-menu-category-mapping-composite-pk" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <!-- Pre-conditions must be first per Liquibase XSD order -->
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="menu_category_mapping"/>
+        </preConditions>
+
+        <comment>
+            Ensure menu_category_mapping uses composite primary key (menu_id, category_id)
+            to match JPA @EmbeddedId mapping. Pre-clean duplicates and add PK safely.
+        </comment>
+        <!-- 1) Remove duplicate rows keeping one per (menu_id, category_id) -->
+
+        <!-- Drop any existing unique index on (menu_id, category_id) to avoid conflicts during cleanup -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE schemaname = 'public' AND indexname = 'uk_menu_category_mapping_menu_category'
+                ) THEN
+                    EXECUTE 'DROP INDEX public.uk_menu_category_mapping_menu_category';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Delete duplicates keeping the smallest id if a surrogate id column exists -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name='menu_category_mapping' AND column_name='id'
+                ) THEN
+                    DELETE FROM menu_category_mapping t
+                    USING menu_category_mapping d
+                    WHERE t.menu_id = d.menu_id
+                      AND t.category_id = d.category_id
+                      AND t.ctid &gt; d.ctid;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- 2) Drop existing primary key (composite or surrogate) to allow adding a new one -->
+        <sql splitStatements="false">
+            DO $$
+            DECLARE pk_name text;
+            BEGIN
+                SELECT tc.constraint_name INTO pk_name
+                FROM information_schema.table_constraints tc
+                WHERE tc.table_schema='public' AND tc.table_name='menu_category_mapping' AND tc.constraint_type='PRIMARY KEY'
+                LIMIT 1;
+                IF pk_name IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE public.menu_category_mapping DROP CONSTRAINT %I', pk_name);
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- 3) Add surrogate id column if missing, backfill, and set as primary key -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='menu_category_mapping' AND column_name='id'
+                ) THEN
+                    ALTER TABLE public.menu_category_mapping ADD COLUMN id UUID;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Backfill null ids with generated UUIDs (requires pgcrypto or pg14 gen_random_uuid) -->
+        <sql>
+            UPDATE menu_category_mapping SET id = gen_random_uuid() WHERE id IS NULL;
+        </sql>
+
+        <!-- Make id not null and add primary key on id -->
+        <sql>
+            ALTER TABLE public.menu_category_mapping ALTER COLUMN id SET NOT NULL;
+        </sql>
+        <addPrimaryKey tableName="menu_category_mapping" columnNames="id" constraintName="pk_menu_category_mapping"/>
+
+        <!-- Enforce logical uniqueness on (menu_id, category_id) -->
+        <addUniqueConstraint tableName="menu_category_mapping" columnNames="menu_id, category_id" constraintName="uk_menu_category_pair"/>
+
+        <!-- 4) Keep id column as the single primary key -->
+
+        <!-- 5) Ensure FKs exist for menu_id and category_id -->
+        <addForeignKeyConstraint baseTableName="menu_category_mapping"
+                                 baseColumnNames="menu_id"
+                                 referencedTableName="menu"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_menu_category_mapping_menu"/>
+
+        <addForeignKeyConstraint baseTableName="menu_category_mapping"
+                                 baseColumnNames="category_id"
+                                 referencedTableName="category"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_menu_category_mapping_category"/>
+
+        <!-- parent_category_id FK is handled in prior changelog 2025-01-27-add-parent-category-id-to-menu-category-mapping.xml -->
+    </changeSet>
+
+</databaseChangeLog>
+

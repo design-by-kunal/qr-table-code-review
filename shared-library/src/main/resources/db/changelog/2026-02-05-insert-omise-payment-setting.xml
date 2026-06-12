@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-05-insert-omise-payment-setting" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="system_payment_setting"/>
+                <tableExists tableName="users"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM system_payment_setting WHERE gateway_code = 'OMISE'
+                </sqlCheck>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM users WHERE email = 'shailesh.parkhi@joshsoftware.com'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>Insert hardcoded OMISE payment gateway setting with created_by set to shailesh.parkhi@joshsoftware.com user UUID</comment>
+
+        <sql>
+            INSERT INTO system_payment_setting (
+                id,
+                gateway_code,
+                is_enabled,
+                created_at,
+                created_by,
+                updated_at,
+                updated_by
+            ) VALUES (
+                gen_random_uuid(),
+                'OMISE',
+                true,
+                CURRENT_TIMESTAMP,
+                (SELECT id FROM users WHERE email = 'shailesh.parkhi@joshsoftware.com' LIMIT 1),
+                CURRENT_TIMESTAMP,
+                NULL
+            );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

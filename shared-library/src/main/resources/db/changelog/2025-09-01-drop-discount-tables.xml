@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-01-1-drop-discount-foreign-keys" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="discount"/>
+            <tableExists tableName="discount_translation"/>
+        </preConditions>
+        
+        <!-- Drop foreign keys from tables referencing discount -->
+        <sql>
+            ALTER TABLE IF EXISTS item_discount_mapping 
+            DROP CONSTRAINT IF EXISTS fk4vc1uohn7in16uopp5q31aryy;
+            
+            ALTER TABLE IF EXISTS orders 
+            DROP CONSTRAINT IF EXISTS fkdovsc3u2it5yoknwgx4brjid1;
+            
+            ALTER TABLE IF EXISTS promotion 
+            DROP CONSTRAINT IF EXISTS fkhic43nuvmvd7q4e6iopwfih68;
+            
+            ALTER TABLE IF EXISTS category_discount_mapping 
+            DROP CONSTRAINT IF EXISTS fkkhibcyi6bq8hs53mqahi2hh1o;
+            
+            ALTER TABLE IF EXISTS discount_translation 
+            DROP CONSTRAINT IF EXISTS fkootggwl53na21kqo2owjy5ul2;
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-09-01-2-drop-discount-foreign-keys-to-other-tables" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="discount"/>
+        </preConditions>
+        
+        <!-- Drop foreign keys from discount table -->
+        <sql>
+            ALTER TABLE IF EXISTS discount 
+            DROP CONSTRAINT IF EXISTS fkbekgw1yygppnsrxxrakropwbc,
+            DROP CONSTRAINT IF EXISTS fkgvovbwpne2ov7rfluv2x3on6h,
+            DROP CONSTRAINT IF EXISTS fknsopcllfn6ngcaqtb6aux56tr;
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-09-01-3-drop-discount-related-tables" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="discount"/>
+            <tableExists tableName="discount_translation"/>
+        </preConditions>
+        
+        <!-- Drop the tables -->
+        <dropTable tableName="discount_translation"/>
+        <dropTable tableName="item_discount_mapping" cascadeConstraints="true"/>
+        <dropTable tableName="category_discount_mapping" cascadeConstraints="true"/>
+        <dropTable tableName="discount"/>
+    </changeSet>
+
+</databaseChangeLog> 

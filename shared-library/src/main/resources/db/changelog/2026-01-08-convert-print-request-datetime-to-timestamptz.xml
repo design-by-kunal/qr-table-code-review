@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert print_request datetime columns to TIMESTAMPTZ for UTC support -->
+    
+    <!-- Convert print_request.requested_at to TIMESTAMPTZ -->
+    <changeSet id="2026-01-08-1-print-request-requested-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="print_request"/>
+            <columnExists tableName="print_request" columnName="requested_at"/>
+        </preConditions>
+        <comment>Convert print_request.requested_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE print_request
+                ALTER COLUMN requested_at TYPE timestamptz
+                USING requested_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert print_request.approved_at to TIMESTAMPTZ -->
+    <changeSet id="2026-01-08-2-print-request-approved-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="print_request"/>
+            <columnExists tableName="print_request" columnName="approved_at"/>
+        </preConditions>
+        <comment>Convert print_request.approved_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE print_request
+                ALTER COLUMN approved_at TYPE timestamptz
+                USING approved_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert print_request.completed_at to TIMESTAMPTZ -->
+    <changeSet id="2026-01-08-3-print-request-completed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="print_request"/>
+            <columnExists tableName="print_request" columnName="completed_at"/>
+        </preConditions>
+        <comment>Convert print_request.completed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE print_request
+                ALTER COLUMN completed_at TYPE timestamptz
+                USING completed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

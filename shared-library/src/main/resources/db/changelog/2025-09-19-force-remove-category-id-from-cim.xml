@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2025-09-19-force-remove-category-id-from-cim" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+        </preConditions>
+        <comment>
+            Force remove category_id column from category_item_mapping table.
+            This migration handles cases where the previous migration may not have run properly.
+        </comment>
+
+        <!-- First, drop any foreign key constraints on category_id if they exist -->
+        <sql splitStatements="false">
+            DO $$
+            DECLARE
+                constraint_name text;
+            BEGIN
+                -- Find and drop foreign key constraint on category_id if it exists
+                SELECT conname INTO constraint_name
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                JOIN pg_namespace n ON t.relnamespace = n.oid
+                WHERE n.nspname = 'public'
+                  AND t.relname = 'category_item_mapping'
+                  AND c.contype = 'f'
+                  AND array_to_string(c.conkey, ',') = (
+                      SELECT array_to_string(array_agg(a.attnum), ',')
+                      FROM pg_attribute a
+                      WHERE a.attrelid = t.oid
+                        AND a.attname = 'category_id'
+                  );
+                
+                IF constraint_name IS NOT NULL THEN
+                    EXECUTE 'ALTER TABLE public.category_item_mapping DROP CONSTRAINT ' || constraint_name;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Drop the category_id column if it exists -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_schema = 'public' 
+                      AND table_name = 'category_item_mapping' 
+                      AND column_name = 'category_id'
+                ) THEN
+                    ALTER TABLE public.category_item_mapping DROP COLUMN category_id;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog> 

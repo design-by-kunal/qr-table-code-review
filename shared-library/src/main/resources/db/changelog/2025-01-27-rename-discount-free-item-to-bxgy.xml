@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-01-27-rename-discount-free-item-to-bxgy" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="discount_free_item"/>
+            <not>
+                <tableExists tableName="discount_bxgy_item"/>
+            </not>
+        </preConditions>
+
+        <comment>Rename discount_free_item table to discount_bxgy_item and modify structure to reference category_item_mapping</comment>
+
+        <!-- Drop existing foreign key constraints -->
+        <dropForeignKeyConstraint baseTableName="discount_free_item"
+                                  constraintName="fkelpu3tfcte9tm7v5wg2vec16a"/>
+        <dropForeignKeyConstraint baseTableName="discount_free_item"
+                                  constraintName="fkmdsmvi8lbw5ddxx5fsq3pcu18"/>
+        <dropForeignKeyConstraint baseTableName="discount_free_item"
+                                  constraintName="fkrp6vcyrr825axprebu57j2xam"/>
+
+        <!-- Rename table -->
+        <renameTable oldTableName="discount_free_item" newTableName="discount_bxgy_item"/>
+
+        <!-- Rename columns -->
+        <renameColumn tableName="discount_bxgy_item"
+                      oldColumnName="discount_free_item_id"
+                      newColumnName="id"/>
+
+        <renameColumn tableName="discount_bxgy_item"
+                      oldColumnName="free_item_id"
+                      newColumnName="get_item_ids"/>
+
+        <renameColumn tableName="discount_bxgy_item"
+                      oldColumnName="item_id"
+                      newColumnName="buy_item_ids"/>
+
+        <!-- Modify column types to reference category_item_mapping.id -->
+        <modifyDataType tableName="discount_bxgy_item"
+                        columnName="get_item_ids"
+                        newDataType="uuid"/>
+
+        <modifyDataType tableName="discount_bxgy_item"
+                        columnName="buy_item_ids"
+                        newDataType="uuid"/>
+
+        <!-- Add new foreign key constraints -->
+        <addForeignKeyConstraint baseTableName="discount_bxgy_item"
+                                 baseColumnNames="discount_id"
+                                 referencedTableName="discount"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_discount_bxgy_item_discount"/>
+
+        <addForeignKeyConstraint baseTableName="discount_bxgy_item"
+                                 baseColumnNames="get_item_ids"
+                                 referencedTableName="category_item_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_discount_bxgy_item_get_category_item_mapping"/>
+
+        <addForeignKeyConstraint baseTableName="discount_bxgy_item"
+                                 baseColumnNames="buy_item_ids"
+                                 referencedTableName="category_item_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_discount_bxgy_item_buy_category_item_mapping"/>
+
+    </changeSet>
+
+</databaseChangeLog> 

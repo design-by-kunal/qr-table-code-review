@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="add-table-code-to-restaurant-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="restaurant_table" columnName="table_code"/>
+            </not>
+        </preConditions>
+        
+        <comment>Add table_code column to restaurant_table. Table codes must be unique within a restaurant layout.</comment>
+        
+        <!-- Step 1: Add column as nullable first -->
+        <addColumn tableName="restaurant_table">
+            <column name="table_code" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Step 2: Set a default value for existing rows (using a generated code) -->
+        <sql>
+            WITH numbered_tables AS (
+                SELECT 
+                    rt.id,
+                    'T' || LPAD(ROW_NUMBER() OVER (
+                        PARTITION BY rs.restaurant_layout_id 
+                        ORDER BY rt.table_order
+                    )::text, 3, '0') AS generated_code
+                FROM restaurant_table rt
+                JOIN restaurant_row rr ON rt.restaurant_row_id = rr.id
+                JOIN restaurant_section rs ON rr.restaurant_section_id = rs.id
+                WHERE rt.table_code IS NULL
+            )
+            UPDATE restaurant_table
+            SET table_code = numbered_tables.generated_code
+            FROM numbered_tables
+            WHERE restaurant_table.id = numbered_tables.id;
+        </sql>
+        
+        <!-- Step 3: Make column NOT NULL -->
+        <addNotNullConstraint tableName="restaurant_table" columnName="table_code" columnDataType="VARCHAR(255)"/>
+        
+    </changeSet>
+
+</databaseChangeLog>
+

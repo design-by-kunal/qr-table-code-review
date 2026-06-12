@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-08-28-remove-section-id-from-restaurant-row" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_row"/>
+            <columnExists tableName="restaurant_row" columnName="section_id"/>
+        </preConditions>
+        <dropColumn tableName="restaurant_row" columnName="section_id"/>
+    </changeSet>
+
+    <changeSet id="2025-08-28-remove-table-count-from-restaurant-row" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_row"/>
+            <columnExists tableName="restaurant_row" columnName="table_count"/>
+        </preConditions>
+        <dropColumn tableName="restaurant_row" columnName="table_count"/>
+    </changeSet>
+
+    <changeSet id="2025-08-28-remove-row-id-from-restaurant-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_table"/>
+            <columnExists tableName="restaurant_table" columnName="row_id"/>
+        </preConditions>
+        <dropColumn tableName="restaurant_table" columnName="row_id"/>
+    </changeSet>
+
+    <changeSet id="2025-08-28-remove-table-number-from-restaurant-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_table"/>
+            <columnExists tableName="restaurant_table" columnName="table_number"/>
+        </preConditions>
+        <dropColumn tableName="restaurant_table" columnName="table_number"/>
+    </changeSet>
+
+</databaseChangeLog>

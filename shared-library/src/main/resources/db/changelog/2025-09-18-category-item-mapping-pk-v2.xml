@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-category-item-mapping-pk-v2" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+        </preConditions>
+
+        <comment>
+            Switch to surrogate UUID primary key (id) for category_item_mapping and enforce unique(category_id, item_id).
+        </comment>
+
+        <!-- Ensure pgcrypto exists for gen_random_uuid() -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pgcrypto') THEN
+                    CREATE EXTENSION pgcrypto;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Deduplicate rows before adding unique constraint -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                DELETE FROM category_item_mapping t
+                USING category_item_mapping d
+                WHERE t.menu_category_mapping_id = d.menu_category_mapping_id
+                  AND t.item_id = d.item_id
+                  AND t.ctid > d.ctid;
+            END;
+            $$;
+        </sql>
+
+        <!-- Add id column if missing -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='category_item_mapping' AND column_name='id'
+                ) THEN
+                    ALTER TABLE public.category_item_mapping ADD COLUMN id UUID;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Backfill and set PK on id -->
+        <sql>
+            UPDATE category_item_mapping SET id = gen_random_uuid() WHERE id IS NULL;
+        </sql>
+        <sql>
+            ALTER TABLE public.category_item_mapping ALTER COLUMN id SET NOT NULL;
+        </sql>
+
+        <!-- Drop existing PK if any, then add new PK on id -->
+        <sql splitStatements="false">
+            DO $$
+            DECLARE pk_name text;
+            BEGIN
+                SELECT tc.constraint_name INTO pk_name
+                FROM information_schema.table_constraints tc
+                WHERE tc.table_schema='public' AND tc.table_name='category_item_mapping' AND tc.constraint_type='PRIMARY KEY'
+                LIMIT 1;
+                IF pk_name IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE public.category_item_mapping DROP CONSTRAINT %I', pk_name);
+                END IF;
+            END;
+            $$;
+        </sql>
+        <addPrimaryKey tableName="category_item_mapping" columnNames="id" constraintName="pk_category_item_mapping_v2"/>
+
+        <!-- Enforce logical uniqueness on pair -->
+        <addUniqueConstraint tableName="category_item_mapping" columnNames="menu_category_mapping_id, item_id" constraintName="uk_category_item_pair_v2"/>
+
+        <!-- Ensure FKs exist -->
+        <addForeignKeyConstraint baseTableName="category_item_mapping"
+                                 baseColumnNames="menu_category_mapping_id"
+                                 referencedTableName="menu_category_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_category_item_mapping_menu_category_mapping_v2"/>
+
+        <addForeignKeyConstraint baseTableName="category_item_mapping"
+                                 baseColumnNames="item_id"
+                                 referencedTableName="item"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_category_item_mapping_item_v2"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+

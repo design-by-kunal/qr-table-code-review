@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert transaction.created_at to TIMESTAMPTZ for UTC support and consistency with transaction.updated_at -->
+    <changeSet id="2026-02-27-1-transaction-created-at-timestamptz" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+            <columnExists tableName="transaction" columnName="created_at"/>
+        </preConditions>
+        <comment>Convert transaction.created_at from TIMESTAMP to TIMESTAMPTZ for OffsetDateTime (UTC) support. Aligns with transaction.updated_at and ensures cancellation threshold and reporting use UTC consistently.</comment>
+
+        <sql>
+            ALTER TABLE transaction
+                ALTER COLUMN created_at TYPE timestamptz
+                USING created_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert transaction.requested_at to TIMESTAMPTZ for UTC support (OffsetDateTime) -->
+    <changeSet id="2026-02-27-2-transaction-requested-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+            <columnExists tableName="transaction" columnName="requested_at"/>
+        </preConditions>
+        <comment>Convert transaction.requested_at from TIMESTAMP to TIMESTAMPTZ for OffsetDateTime (UTC) support. Aligns with created_at and updated_at.</comment>
+
+        <sql>
+            ALTER TABLE transaction
+                ALTER COLUMN requested_at TYPE timestamptz
+                USING requested_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

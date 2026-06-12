@@ -1,0 +1,33 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+ <changeSet id="20250806-3-drop-old-language-code" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists 
+                tableName="menu_structure_translation" 
+                columnName="language_code"/>
+        </preConditions>
+        <dropColumn 
+            tableName="menu_structure_translation" 
+            columnName="language_code"/>
+    </changeSet>
+
+    <!-- 4. Re-add language_code with NOT NULL constraint -->
+    <changeSet id="20250806-4-add-language-code" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists 
+                    tableName="menu_structure_translation" 
+                    columnName="language_code"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="menu_structure_translation">
+            <column name="language_code" type="varchar(10)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

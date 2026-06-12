@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="add-case-insensitive-unique-constraints" author="josh">
+        <comment>Add case-insensitive unique constraints for restaurant group names and codes</comment>
+        
+        <!-- Drop existing constraints/indexes if they exist -->
+        <sql>
+            DROP INDEX IF EXISTS uk_restaurant_group_code_case_insensitive;
+        </sql>
+        
+        <sql>
+            ALTER TABLE restaurant_group_translation DROP CONSTRAINT IF EXISTS uk_restaurant_group_translation_name_case_insensitive;
+        </sql>
+        
+        <sql>
+            DROP INDEX IF EXISTS uk_restaurant_group_translation_name_case_insensitive;
+        </sql>
+        
+        <!-- Clean up duplicate restaurant group codes (keep the first one, delete others) -->
+        <sql>
+            DELETE FROM restaurant_group 
+            WHERE id NOT IN (
+                SELECT DISTINCT ON (LOWER(restaurant_group_code)) id 
+                FROM restaurant_group 
+                WHERE restaurant_group_code IS NOT NULL 
+                ORDER BY LOWER(restaurant_group_code), id
+            ) 
+            AND restaurant_group_code IS NOT NULL;
+        </sql>
+        
+        <!-- Clean up duplicate restaurant group translation names (keep the first one, delete others) -->
+        <sql>
+            DELETE FROM restaurant_group_translation 
+            WHERE id NOT IN (
+                SELECT DISTINCT ON (LOWER(name), restaurant_group_id) id 
+                FROM restaurant_group_translation 
+                WHERE name IS NOT NULL 
+                ORDER BY LOWER(name), restaurant_group_id, id
+            ) 
+            AND name IS NOT NULL;
+        </sql>
+        
+        <!-- Add case-insensitive unique constraint for restaurant_group_code -->
+        <sql>
+            CREATE UNIQUE INDEX uk_restaurant_group_code_case_insensitive 
+            ON restaurant_group (LOWER(restaurant_group_code)) 
+            WHERE is_deleted = false;
+        </sql>
+        
+        <!-- Add case-insensitive unique constraint for restaurant group translation names -->
+        <!-- Note: This creates a simple unique index on the translation table -->
+        <!-- The application logic should handle the filtering for non-deleted restaurant groups -->
+        <sql>
+            CREATE UNIQUE INDEX uk_restaurant_group_translation_name_case_insensitive 
+            ON restaurant_group_translation (LOWER(name), restaurant_group_id);
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog>

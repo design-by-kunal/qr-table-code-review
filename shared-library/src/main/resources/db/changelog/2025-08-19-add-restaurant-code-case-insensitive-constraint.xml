@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="add-restaurant-code-case-insensitive-constraint" author="josh">
+        <comment>Add case-insensitive unique constraint for restaurant codes</comment>
+        
+        <!-- Drop existing constraint/index if it exists -->
+        <sql>
+            DROP INDEX IF EXISTS uk_restaurant_code_case_insensitive;
+        </sql>
+        
+        <!-- Clean up duplicate restaurant codes (keep the first one, delete others) -->
+        <sql>
+            DELETE FROM restaurant 
+            WHERE id NOT IN (
+                SELECT DISTINCT ON (LOWER(restaurant_code)) id 
+                FROM restaurant 
+                WHERE restaurant_code IS NOT NULL 
+                ORDER BY LOWER(restaurant_code), id
+            ) 
+            AND restaurant_code IS NOT NULL;
+        </sql>
+        
+        <!-- Add case-insensitive unique constraint for restaurant_code -->
+        <sql>
+            CREATE UNIQUE INDEX uk_restaurant_code_case_insensitive 
+            ON restaurant (LOWER(restaurant_code)) 
+            WHERE is_deleted = false;
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog>

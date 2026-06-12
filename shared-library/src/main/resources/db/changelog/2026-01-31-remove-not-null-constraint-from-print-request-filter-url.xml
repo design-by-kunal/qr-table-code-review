@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Remove NOT NULL constraint from print_request.file_url column -->
+    <changeSet id="2026-01-31-1-remove-not-null-constraint-from-print-request-file-url" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="print_request"/>
+            <columnExists tableName="print_request" columnName="file_url"/>
+        </preConditions>
+        <comment>Remove NOT NULL constraint from print_request.file_url column</comment>
+        
+        <dropNotNullConstraint tableName="print_request" columnName="file_url" columnDataType="VARCHAR(1000)"/>
+    </changeSet>
+
+</databaseChangeLog>

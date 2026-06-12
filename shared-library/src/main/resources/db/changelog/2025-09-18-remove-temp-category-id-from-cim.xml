@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Optional FK drop guarded separately to satisfy XML order rules -->
+    <changeSet id="2025-09-18-remove-temp-category-id-from-cim-fkdrop" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+            <foreignKeyConstraintExists foreignKeyName="fk_category_item_mapping_category"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="category_item_mapping"
+                                  constraintName="fk_category_item_mapping_category"/>
+    </changeSet>
+
+    <changeSet id="2025-09-18-remove-temp-category-id-from-cim" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+            <columnExists tableName="category_item_mapping" columnName="category_id"/>
+        </preConditions>
+        <comment>
+            Remove temporary category_id column from category_item_mapping table.
+            All data has been migrated to use menu_category_mapping_id.
+        </comment>
+
+        <!-- Drop the column -->
+        <dropColumn tableName="category_item_mapping" columnName="category_id"/>
+    </changeSet>
+</databaseChangeLog>

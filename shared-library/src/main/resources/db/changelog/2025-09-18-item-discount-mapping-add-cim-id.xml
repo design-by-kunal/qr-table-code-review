@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-item-discount-mapping-add-cim-id" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="item_discount_mapping"/>
+            <not>
+                <columnExists tableName="item_discount_mapping" columnName="category_item_mapping_id"/>
+            </not>
+        </preConditions>
+
+        <comment>Add category_item_mapping_id (UUID) to item_discount_mapping, backfill from (item_id, category) via category_item_mapping, add FK and unique constraint with discount_id.</comment>
+
+        <addColumn tableName="item_discount_mapping">
+            <column name="category_item_mapping_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Backfill: join item_discount_mapping.item_id to category_item_mapping.item_id; choose latest by id if multiple -->
+        <sql>
+            UPDATE item_discount_mapping idm
+            SET category_item_mapping_id = sub.cim_id
+            FROM (
+                SELECT DISTINCT ON (cim.item_id)
+                    cim.item_id,
+                    cim.id AS cim_id
+                FROM category_item_mapping cim
+                ORDER BY cim.item_id, cim.id DESC
+            ) sub
+            WHERE idm.item_id = sub.item_id
+              AND idm.category_item_mapping_id IS NULL;
+        </sql>
+
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM item_discount_mapping WHERE category_item_mapping_id IS NULL
+                ) THEN
+                    EXECUTE 'ALTER TABLE public.item_discount_mapping ALTER COLUMN category_item_mapping_id SET NOT NULL';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <addForeignKeyConstraint baseTableName="item_discount_mapping"
+                                 baseColumnNames="category_item_mapping_id"
+                                 referencedTableName="category_item_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_item_discount_mapping_cim"/>
+
+        <addUniqueConstraint tableName="item_discount_mapping"
+                             columnNames="category_item_mapping_id, discount_id"
+                             constraintName="uk_idm_cim_discount"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+
+

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Allow audit_trail.user_id / created_by = payment.online-card.user-id without a users row -->
+    <changeSet id="2026-05-15-drop-audit-trail-created-by-fk" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk7981p1oa0o99i4xfja8hwdqeh"
+                                        foreignKeyTableName="audit_trail"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="audit_trail"
+                                  constraintName="fk7981p1oa0o99i4xfja8hwdqeh"/>
+    </changeSet>
+
+    <changeSet id="2026-05-15-drop-audit-trail-user-id-fk" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk9xh0gakjuvbu7sri5b62tkw8n"
+                                        foreignKeyTableName="audit_trail"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="audit_trail"
+                                  constraintName="fk9xh0gakjuvbu7sri5b62tkw8n"/>
+    </changeSet>
+
+</databaseChangeLog>

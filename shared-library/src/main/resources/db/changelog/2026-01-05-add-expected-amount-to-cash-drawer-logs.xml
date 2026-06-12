@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-01-05-add-expected-amount-to-cash-drawer-logs" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="cash_drawer_logs" columnName="expected_amount"/>
+            </not>
+        </preConditions>
+        <comment>Add expected_amount column to cash_drawer_logs to track transactional discrepancies.</comment>
+        
+        <addColumn tableName="cash_drawer_logs">
+            <column name="expected_amount" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Backfill existing records: set expected_amount to amount -->
+        <update tableName="cash_drawer_logs">
+            <column name="expected_amount" valueComputed="amount"/>
+            <where>expected_amount IS NULL</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

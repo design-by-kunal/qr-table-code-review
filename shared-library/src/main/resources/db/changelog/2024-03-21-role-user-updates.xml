@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop audit columns from role table -->
+    <changeSet id="20240321-1-drop-role-audit-columns" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="role" columnName="created_at"/>
+            <columnExists tableName="role" columnName="updated_at"/>
+            <columnExists tableName="role" columnName="created_by"/>
+            <columnExists tableName="role" columnName="updated_by"/>
+        </preConditions>
+        
+        <dropColumn tableName="role" columnName="created_at"/>
+        <dropColumn tableName="role" columnName="updated_at"/>
+        <dropColumn tableName="role" columnName="created_by"/>
+        <dropColumn tableName="role" columnName="updated_by"/>
+    </changeSet>
+
+    <!-- Update user table columns -->
+    <changeSet id="20240321-2-update-user-columns" author="josh">
+        <!-- Convert employee_id to user_code -->
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="employee_id"/>
+        </preConditions>
+        <renameColumn tableName="users" 
+                     oldColumnName="employee_id" 
+                     newColumnName="user_code"
+                     columnDataType="varchar(50)"/>
+    </changeSet>
+
+    <changeSet id="20240321-3-modify-user-code-datatype" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="user_code"/>
+        </preConditions>
+        <modifyDataType tableName="users"
+                       columnName="user_code"
+                       newDataType="varchar(50)"/>
+    </changeSet>
+
+    <changeSet id="20240321-4-rename-language-column" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="language"/>
+        </preConditions>
+        <!-- Convert language to language_code -->
+        <renameColumn tableName="users" 
+                     oldColumnName="language" 
+                     newColumnName="language_code"
+                     columnDataType="varchar(5)"/>
+    </changeSet>
+
+    <changeSet id="20240321-5-add-constraints" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="language_code"/>
+            <columnExists tableName="users" columnName="user_code"/>
+        </preConditions>
+        <!-- Add/Update constraints -->
+        <addNotNullConstraint tableName="users"
+                             columnName="language_code"
+                             columnDataType="varchar(5)"/>
+
+        <addNotNullConstraint tableName="users"
+                             columnName="user_code"
+                             columnDataType="varchar(50)"/>
+
+        <addUniqueConstraint tableName="users"
+                            columnNames="user_code"
+                            constraintName="uk_users_user_code"/>
+    </changeSet>
+
+</databaseChangeLog> 

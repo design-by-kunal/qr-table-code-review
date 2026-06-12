@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-09-update-morning-shift-created-at-by" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="shift"/>
+                <tableExists tableName="shift_translation"/>
+                <tableExists tableName="users"/>
+                <columnExists tableName="shift" columnName="created_at"/>
+                <columnExists tableName="shift" columnName="created_by"/>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM shift_translation WHERE name = 'Morning Shift' AND language_code = 'en'
+                </sqlCheck>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM users WHERE email = 'shailesh.parkhi@joshsoftware.com'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>
+            Update all shifts with NULL created_at or created_by fields.
+            Sets created_at to current timestamp and created_by to HQ admin user ID (shailesh.parkhi@joshsoftware.com).
+            This migration updates all existing shift records that were created before the audit columns were added.
+        </comment>
+
+        <sql>
+            -- Update all shifts with NULL created_at or created_by
+            UPDATE shift
+            SET 
+                created_at = COALESCE(created_at, CURRENT_TIMESTAMP),
+                created_by = COALESCE(created_by, (SELECT id FROM users WHERE email = 'shailesh.parkhi@joshsoftware.com' LIMIT 1))
+            WHERE created_at IS NULL OR created_by IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

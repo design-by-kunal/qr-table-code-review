@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-22-handle-status-column-drop" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="category_item_mapping"/>
+                <!-- Only run if column doesn't exist (already dropped) but original migration hasn't run -->
+                <not>
+                    <columnExists tableName="category_item_mapping" columnName="status"/>
+                </not>
+                <not>
+                    <changeSetExecuted id="2025-01-27-02" author="system" changeLogFile="db/changelog/2025-01-27-remove-status-from-category-item-mapping.xml"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Handle case where status column is already dropped but original migration hasn't run yet</comment>
+        
+        <!-- This changeset does nothing - it just marks that we've checked the state -->
+        <!-- The original migration will fail if column doesn't exist, so this handles that case -->
+    </changeSet>
+
+</databaseChangeLog>

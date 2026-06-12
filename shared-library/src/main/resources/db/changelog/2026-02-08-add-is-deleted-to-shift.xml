@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add is_deleted column to shift table -->
+    <changeSet id="20260208-1-add-is-deleted-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="shift" columnName="is_deleted"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="shift">
+            <column name="is_deleted" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add created_at column to shift table -->
+    <changeSet id="20260208-3-add-created-at-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="shift" columnName="created_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="shift">
+            <column name="created_at" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add created_by column to shift table -->
+    <changeSet id="20260208-4-add-created-by-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="shift" columnName="created_by"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="shift">
+            <column name="created_by" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="shift"
+                baseColumnNames="created_by"
+                constraintName="fk_shift_created_by"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+    <!-- Add updated_at column to shift table -->
+    <changeSet id="20260208-5-add-updated-at-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="shift" columnName="updated_at"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="shift">
+            <column name="updated_at" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add updated_by column to shift table -->
+    <changeSet id="20260208-6-add-updated-by-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="shift" columnName="updated_by"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="shift">
+            <column name="updated_by" type="uuid">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint
+                baseTableName="shift"
+                baseColumnNames="updated_by"
+                constraintName="fk_shift_updated_by"
+                referencedTableName="users"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

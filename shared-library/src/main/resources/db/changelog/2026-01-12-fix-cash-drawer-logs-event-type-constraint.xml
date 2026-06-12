@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Fix invalid event_type values and ensure constraint is properly applied -->
+    <changeSet id="2026-01-12-fix-cash-drawer-logs-event-type-constraint" author="system">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="cash_drawer_logs"/>
+            <columnExists tableName="cash_drawer_logs" columnName="event_type"/>
+        </preConditions>
+        <comment>
+            Fix invalid event_type values in cash_drawer_logs table and ensure the constraint
+            is properly applied. This migration handles cases where existing data from server
+            dump contains invalid event_type values that don't match the DrawerEventType enum.
+            
+            Invalid values will be mapped to the closest valid enum value:
+            - Any value not in the allowed list will be set to 'SALE_INFLOW' as a safe default
+            - This ensures data integrity while preserving existing records
+        </comment>
+        
+        <sql>
+            -- First, drop the constraint if it exists (in case previous migration partially ran)
+            ALTER TABLE cash_drawer_logs DROP CONSTRAINT IF EXISTS cash_drawer_logs_event_type_check;
+        </sql>
+
+        <sql>
+            -- Fix invalid event_type values by setting them to a valid default (SALE_INFLOW)
+            -- This preserves the data while ensuring constraint compliance
+            UPDATE cash_drawer_logs
+            SET event_type = 'SALE_INFLOW'::character varying
+            WHERE event_type::text NOT IN (
+                'OPENING_BALANCE',
+                'SALE_INFLOW',
+                'SALE_REFUND',
+                'MANUAL_DEPOSIT',
+                'MANUAL_WITHDRAWAL',
+                'CLOSING_BALANCE'
+            );
+        </sql>
+        
+        <sql>
+            -- Now add the constraint with ALL DrawerEventType enum values included
+            -- This will succeed because all data is now valid
+            ALTER TABLE cash_drawer_logs 
+            ADD CONSTRAINT cash_drawer_logs_event_type_check 
+            CHECK (event_type::text = ANY (ARRAY[
+                'OPENING_BALANCE'::character varying::text,
+                'SALE_INFLOW'::character varying::text,
+                'SALE_REFUND'::character varying::text,
+                'MANUAL_DEPOSIT'::character varying::text,
+                'MANUAL_WITHDRAWAL'::character varying::text,
+                'CLOSING_BALANCE'::character varying::text
+            ]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

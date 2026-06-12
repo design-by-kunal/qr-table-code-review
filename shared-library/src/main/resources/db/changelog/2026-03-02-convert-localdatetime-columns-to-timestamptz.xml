@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert LocalDateTime columns to TIMESTAMPTZ (UTC) for OffsetDateTime support. Only alters columns that are still timestamp without time zone. -->
+
+    <!-- users -->
+    <changeSet id="2026-03-02-1-users-created-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE users ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-2-users-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="updated_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'updated_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE users ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-3-users-profile-update-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="profile_update_requested_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'profile_update_requested_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE users ALTER COLUMN profile_update_requested_at TYPE timestamptz USING profile_update_requested_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-4-users-profile-reviewed-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="profile_update_reviewed_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'profile_update_reviewed_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE users ALTER COLUMN profile_update_reviewed_at TYPE timestamptz USING profile_update_reviewed_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+
+    <!-- restaurant -->
+    <changeSet id="2026-03-02-5-restaurant-created-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant"/>
+            <columnExists tableName="restaurant" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE restaurant ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-6-restaurant-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant"/>
+            <columnExists tableName="restaurant" columnName="updated_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant' AND column_name = 'updated_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE restaurant ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+
+    <!-- restaurant_group -->
+    <changeSet id="2026-03-02-7-restaurant-group-created-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_group"/>
+            <columnExists tableName="restaurant_group" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_group' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE restaurant_group ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-8-restaurant-group-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_group"/>
+            <columnExists tableName="restaurant_group" columnName="updated_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_group' AND column_name = 'updated_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE restaurant_group ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+
+    <!-- restaurant_table -->
+    <changeSet id="2026-03-02-9a-restaurant-table-created-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_table"/>
+            <columnExists tableName="restaurant_table" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_table' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_table ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_table ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-9b-restaurant-table-section-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_table"/>
+            <columnExists tableName="restaurant_table" columnName="table_section_requested_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_table' AND column_name = 'table_section_requested_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_table ALTER COLUMN table_section_requested_at TYPE timestamptz USING table_section_requested_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_table ALTER COLUMN table_section_reviewed_at TYPE timestamptz USING table_section_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- shift -->
+    <changeSet id="2026-03-02-10-shift-created-updated-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="shift"/>
+            <columnExists tableName="shift" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'shift' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE shift ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE shift ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- system_payment_setting -->
+    <changeSet id="2026-03-02-11-system-payment-setting-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="system_payment_setting"/>
+            <columnExists tableName="system_payment_setting" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'system_payment_setting' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE system_payment_setting ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE system_payment_setting ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- orders (additional_discount_requested_at, cancellation_requested_at - created_at/updated_at may already be timestamptz) -->
+    <changeSet id="2026-03-02-12-orders-requested-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+            <columnExists tableName="orders" columnName="additional_discount_requested_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'orders' AND column_name = 'additional_discount_requested_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE orders ALTER COLUMN additional_discount_requested_at TYPE timestamptz USING additional_discount_requested_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+    <changeSet id="2026-03-02-13-orders-cancellation-requested-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+            <columnExists tableName="orders" columnName="cancellation_requested_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'orders' AND column_name = 'cancellation_requested_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE orders ALTER COLUMN cancellation_requested_at TYPE timestamptz USING cancellation_requested_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+
+    <!-- ordered_item cancellation_requested_at -->
+    <changeSet id="2026-03-02-14-ordered-item-cancellation-requested-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item"/>
+            <columnExists tableName="ordered_item" columnName="cancellation_requested_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'ordered_item' AND column_name = 'cancellation_requested_at'</sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE ordered_item ALTER COLUMN cancellation_requested_at TYPE timestamptz USING cancellation_requested_at AT TIME ZONE 'UTC';</sql>
+    </changeSet>
+
+    <!-- ordered_combo created_at, cancellation_requested_at -->
+    <changeSet id="2026-03-02-15-ordered-combo-created-cancellation-at" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_combo"/>
+            <columnExists tableName="ordered_combo" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'ordered_combo' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE ordered_combo ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE ordered_combo ALTER COLUMN cancellation_requested_at TYPE timestamptz USING cancellation_requested_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- promotion, restaurant_section, template_*, user_password_audit, table_assignment, ordered_item_modifier, refresh_token, restaurant_layout, permission, refund, restaurant_chain, price_override, restaurant_operating_hours, restaurant_row, rating, menu, email_schedule, modifier_item, kds, login_audit, item, kds_configuration, discount, modifier_group, menu_structure, cash_drawer_logs, cashier_transaction, combo, audit_trail, cashier_shift, category, bulk_uploads, charges, cash_drawers, audit_logging -->
+    <changeSet id="2026-03-02-16-promotion-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="promotion"/>
+            <columnExists tableName="promotion" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'promotion' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE promotion ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE promotion ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-17-restaurant-section-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_section"/>
+            <columnExists tableName="restaurant_section" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_section' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_section ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_section ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_section ALTER COLUMN table_section_requested_at TYPE timestamptz USING table_section_requested_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_section ALTER COLUMN table_section_reviewed_at TYPE timestamptz USING table_section_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-18a-template-layout-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_layout"/>
+            <columnExists tableName="template_layout" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'template_layout' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE template_layout ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE template_layout ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-18b-template-row-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_row"/>
+            <columnExists tableName="template_row" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'template_row' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE template_row ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE template_row ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-18c-template-section-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_section"/>
+            <columnExists tableName="template_section" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'template_section' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE template_section ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE template_section ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-18d-template-table-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_table"/>
+            <columnExists tableName="template_table" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'template_table' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE template_table ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE template_table ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-19-user-password-audit-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="user_password_audit"/>
+            <columnExists tableName="user_password_audit" columnName="otp_expiry_date"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'user_password_audit' AND column_name = 'otp_expiry_date'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE user_password_audit ALTER COLUMN otp_expiry_date TYPE timestamptz USING otp_expiry_date AT TIME ZONE 'UTC';
+            ALTER TABLE user_password_audit ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE user_password_audit ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-20-table-assignment-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="table_assignment"/>
+            <columnExists tableName="table_assignment" columnName="assigned_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'table_assignment' AND column_name = 'assigned_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE table_assignment ALTER COLUMN assigned_at TYPE timestamptz USING assigned_at AT TIME ZONE 'UTC';
+            ALTER TABLE table_assignment ALTER COLUMN unassigned_at TYPE timestamptz USING unassigned_at AT TIME ZONE 'UTC';
+            ALTER TABLE table_assignment ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE table_assignment ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-21-ordered-item-modifier-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item_modifier"/>
+            <columnExists tableName="ordered_item_modifier" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'ordered_item_modifier' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE ordered_item_modifier ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE ordered_item_modifier ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-22-refresh-token-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refresh_token"/>
+            <columnExists tableName="refresh_token" columnName="issued_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'refresh_token' AND column_name = 'issued_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE refresh_token ALTER COLUMN issued_at TYPE timestamptz USING issued_at AT TIME ZONE 'UTC';
+            ALTER TABLE refresh_token ALTER COLUMN expires_at TYPE timestamptz USING expires_at AT TIME ZONE 'UTC';
+            ALTER TABLE refresh_token ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE refresh_token ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-23-restaurant-layout-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_layout"/>
+            <columnExists tableName="restaurant_layout" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_layout' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_layout ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_layout ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-24-permission-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="permission"/>
+            <columnExists tableName="permission" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'permission' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE permission ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE permission ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-25-refund-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="completed_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'refund' AND column_name = 'completed_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE refund ALTER COLUMN completed_at TYPE timestamptz USING completed_at AT TIME ZONE 'UTC';
+            ALTER TABLE refund ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE refund ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-26-restaurant-chain-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_chain"/>
+            <columnExists tableName="restaurant_chain" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_chain' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_chain ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_chain ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-26b-price-override-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="price_override"/>
+            <columnExists tableName="price_override" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'price_override' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE price_override ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE price_override ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <!-- Batched changeSet: all listed tables must exist and have timestamp without time zone when this runs. PreCondition checks restaurant_operating_hours only; if any other table is missing or already migrated, the changeSet may fail. -->
+    <changeSet id="2026-03-02-26c-restaurant-operating-hours-row-rating-menu-email-schedule-modifier-kds" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_operating_hours"/>
+            <columnExists tableName="restaurant_operating_hours" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'restaurant_operating_hours' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE restaurant_operating_hours ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_operating_hours ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_row ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE restaurant_row ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE rating ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE rating ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE menu ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE menu ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE email_schedule ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE email_schedule ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE modifier_item ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE modifier_item ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE kds ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE kds ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-27-login-audit-timestamps" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="login_audit"/>
+            <columnExists tableName="login_audit" columnName="date_created"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'login_audit' AND column_name = 'date_created'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE login_audit ALTER COLUMN login_expiry_date TYPE timestamptz USING login_expiry_date AT TIME ZONE 'UTC';
+            ALTER TABLE login_audit ALTER COLUMN date_created TYPE timestamptz USING date_created AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <changeSet id="2026-03-02-27b-item-kds-config-discount-modifier-group-menu-structure" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="item"/>
+            <columnExists tableName="item" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'item' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE item ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE item ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE kds_configuration ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE kds_configuration ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE discount ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE discount ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE modifier_group ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE modifier_group ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE menu_structure ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE menu_structure ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+    <!-- Batched changeSet: all listed tables must exist and have timestamp without time zone when this runs. PreCondition checks cash_drawer_logs only; if any other table is missing or already migrated, the changeSet may fail. -->
+    <changeSet id="2026-03-02-28-cash-drawer-log-transaction-combo-audit-cashier-shift-category-bulk-charges-drawers-audit-logging" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="cash_drawer_logs"/>
+            <columnExists tableName="cash_drawer_logs" columnName="created_at"/>
+            <sqlCheck expectedResult="timestamp without time zone">SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'cash_drawer_logs' AND column_name = 'created_at'</sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE cash_drawer_logs ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_transaction ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_transaction ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE combo ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE combo ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE audit_trail ALTER COLUMN requested_at TYPE timestamptz USING requested_at AT TIME ZONE 'UTC';
+            ALTER TABLE audit_trail ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE audit_trail ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_shift ALTER COLUMN started_at TYPE timestamptz USING started_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_shift ALTER COLUMN closed_at TYPE timestamptz USING closed_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_shift ALTER COLUMN approved_at TYPE timestamptz USING approved_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_shift ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE cashier_shift ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE category ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE category ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE bulk_uploads ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE bulk_uploads ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE charges ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE charges ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE cash_drawers ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+            ALTER TABLE cash_drawers ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+            ALTER TABLE audit_logging ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

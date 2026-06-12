@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Update cash_drawer_logs event_type constraint to include ADJUSTMENT_APPROVED, ADJUSTMENT_PENDING, and ADJUSTMENT_REJECTED -->
+    <changeSet id="2026-01-14-add-adjustment-event-types-to-drawer-event-type-constraint" author="system">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="cash_drawer_logs"/>
+            <columnExists tableName="cash_drawer_logs" columnName="event_type"/>
+        </preConditions>
+        <comment>
+            Update cash_drawer_logs event_type constraint to include ADJUSTMENT_APPROVED, ADJUSTMENT_PENDING, and ADJUSTMENT_REJECTED enum values.
+            This allows adjustment-related drawer events to be stored in the database.
+        </comment>
+        <sql>
+            -- Drop the existing constraint
+            ALTER TABLE cash_drawer_logs DROP CONSTRAINT IF EXISTS cash_drawer_logs_event_type_check;
+        </sql>
+        <sql>
+            -- Add updated constraint with ALL DrawerEventType enum values included (including new adjustment types)
+            ALTER TABLE cash_drawer_logs 
+            ADD CONSTRAINT cash_drawer_logs_event_type_check 
+            CHECK (event_type::text = ANY (ARRAY[
+                'OPENING_BALANCE'::character varying::text,
+                'SALE_INFLOW'::character varying::text,
+                'SALE_REFUND'::character varying::text,
+                'MANUAL_DEPOSIT'::character varying::text,
+                'MANUAL_WITHDRAWAL'::character varying::text,
+                'CLOSING_BALANCE'::character varying::text,
+                'ADJUSTMENT_APPROVED'::character varying::text,
+                'ADJUSTMENT_PENDING'::character varying::text,
+                'ADJUSTMENT_REJECTED'::character varying::text
+            ]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

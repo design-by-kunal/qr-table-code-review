@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop foreign key constraint for requested_by if it exists -->
+    <changeSet id="2025-12-01-drop-fk-refund-requested-by" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) 
+                FROM information_schema.table_constraints 
+                WHERE constraint_schema = current_schema()
+                AND table_name = 'refund'
+                AND constraint_name LIKE '%requested_by%'
+                AND constraint_type = 'FOREIGN KEY'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            DO $$
+            DECLARE
+                fk_name TEXT;
+            BEGIN
+                -- Find and drop the foreign key constraint for requested_by
+                SELECT constraint_name INTO fk_name
+                FROM information_schema.table_constraints
+                WHERE constraint_schema = current_schema()
+                AND table_name = 'refund'
+                AND constraint_name LIKE '%requested_by%'
+                AND constraint_type = 'FOREIGN KEY'
+                LIMIT 1;
+                
+                IF fk_name IS NOT NULL THEN
+                    EXECUTE 'ALTER TABLE refund DROP CONSTRAINT IF EXISTS ' || quote_ident(fk_name);
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+
+    <!-- Drop foreign key constraint for reviewed_by if it exists -->
+    <changeSet id="2025-12-01-drop-fk-refund-reviewed-by" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) 
+                FROM information_schema.table_constraints 
+                WHERE constraint_schema = current_schema()
+                AND table_name = 'refund'
+                AND constraint_name LIKE '%reviewed_by%'
+                AND constraint_type = 'FOREIGN KEY'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            DO $$
+            DECLARE
+                fk_name TEXT;
+            BEGIN
+                -- Find and drop the foreign key constraint for reviewed_by
+                SELECT constraint_name INTO fk_name
+                FROM information_schema.table_constraints
+                WHERE constraint_schema = current_schema()
+                AND table_name = 'refund'
+                AND constraint_name LIKE '%reviewed_by%'
+                AND constraint_type = 'FOREIGN KEY'
+                LIMIT 1;
+                
+                IF fk_name IS NOT NULL THEN
+                    EXECUTE 'ALTER TABLE refund DROP CONSTRAINT IF EXISTS ' || quote_ident(fk_name);
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+
+    <!-- Drop request_status column -->
+    <changeSet id="2025-12-01-drop-refund-request-status" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="request_status"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="request_status"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop request_data column -->
+    <changeSet id="2025-12-01-drop-refund-request-data" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="request_data"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="request_data"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop requested_at column -->
+    <changeSet id="2025-12-01-drop-refund-requested-at" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="requested_at"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="requested_at"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop reviewed_at column -->
+    <changeSet id="2025-12-01-drop-refund-reviewed-at" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="reviewed_at"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="reviewed_at"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop requested_by column -->
+    <changeSet id="2025-12-01-drop-refund-requested-by" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="requested_by"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="requested_by"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop reviewed_by column -->
+    <changeSet id="2025-12-01-drop-refund-reviewed-by" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="reviewed_by"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="reviewed_by"/>
+        </dropColumn>
+    </changeSet>
+
+    <!-- Drop request_comments column -->
+    <changeSet id="2025-12-01-drop-refund-request-comments" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="refund"/>
+            <columnExists tableName="refund" columnName="request_comments"/>
+        </preConditions>
+        <dropColumn tableName="refund">
+            <column name="request_comments"/>
+        </dropColumn>
+    </changeSet>
+
+</databaseChangeLog>
+

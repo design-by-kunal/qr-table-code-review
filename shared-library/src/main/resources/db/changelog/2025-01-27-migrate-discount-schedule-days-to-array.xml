@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add days_of_week array column to discount_schedule table -->
+    <changeSet id="20250127-1-add-days-of-week-array-column" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="discount_schedule" columnName="days_of_week"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="discount_schedule">
+            <column name="days_of_week" type="TEXT[]">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Migrate data from discount_schedule_days to the new array column -->
+    <changeSet id="20250127-2-migrate-days-of-week-data" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="discount_schedule_days"/>
+                <columnExists tableName="discount_schedule" columnName="days_of_week"/>
+            </and>
+        </preConditions>
+        <sql>
+            <![CDATA[
+            UPDATE discount_schedule 
+            SET days_of_week = (
+                SELECT ARRAY_AGG(day_of_week ORDER BY day_of_week)
+                FROM discount_schedule_days 
+                WHERE discount_schedule_days.discount_schedule_id = discount_schedule.discount_schedule_id
+            )
+            WHERE EXISTS (
+                SELECT 1 FROM discount_schedule_days 
+                WHERE discount_schedule_days.discount_schedule_id = discount_schedule.discount_schedule_id
+            );
+            ]]>
+        </sql>
+    </changeSet>
+
+    <!-- Add check constraint to ensure valid DayOfWeek enum values -->
+    <changeSet id="20250127-3-add-days-of-week-check-constraint" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <columnExists tableName="discount_schedule" columnName="days_of_week"/>
+                <sqlCheck expectedResult="0">
+                    <![CDATA[
+                    SELECT COUNT(*) FROM information_schema.check_constraints 
+                    WHERE constraint_name = 'discount_schedule_days_of_week_check'
+                    ]]>
+                </sqlCheck>
+            </and>
+        </preConditions>
+        <sql>
+            <![CDATA[
+            ALTER TABLE discount_schedule 
+            ADD CONSTRAINT discount_schedule_days_of_week_check 
+            CHECK (days_of_week IS NULL OR (
+                array_length(days_of_week, 1) IS NULL OR 
+                (array_length(days_of_week, 1) > 0 AND 
+                 days_of_week <@ ARRAY['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'ALL_DAYS']::text[])
+            ));
+            ]]>
+        </sql>
+    </changeSet>
+
+    <!-- Drop the foreign key constraint from discount_schedule_days table -->
+    <changeSet id="20250127-4-drop-discount-schedule-days-fk" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                <![CDATA[
+                SELECT COUNT(*) FROM information_schema.table_constraints 
+                WHERE constraint_name = 'fk1mwjp1ts68i3tmhwx3us58sed'
+                ]]>
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            <![CDATA[
+            ALTER TABLE discount_schedule_days 
+            DROP CONSTRAINT fk1mwjp1ts68i3tmhwx3us58sed;
+            ]]>
+        </sql>
+    </changeSet>
+
+    <!-- Drop the discount_schedule_days table -->
+    <changeSet id="20250127-5-drop-discount-schedule-days-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="discount_schedule_days"/>
+        </preConditions>
+        <dropTable tableName="discount_schedule_days"/>
+    </changeSet>
+
+</databaseChangeLog>

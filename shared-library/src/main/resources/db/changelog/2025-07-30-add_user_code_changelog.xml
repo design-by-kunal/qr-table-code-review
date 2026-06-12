@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Step 1: Add user_code column (nullable at first) -->
+    <changeSet id="1-add-user-code-column" author="shailesh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="user_code"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="user_code" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2: Populate user_code with unique 6-char strings -->
+    <changeSet id="2-populate-user-code" author="shailesh">
+        <comment>Populate user_code with 6-character uppercase values</comment>
+        <sql>
+            UPDATE users
+            SET user_code = UPPER(SUBSTRING(md5(random()::text), 1, 6))
+            WHERE user_code IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 4: Drop employee_code if it exists -->
+    <changeSet id="4-drop-employee-code" author="shailesh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="employee_code"/>
+        </preConditions>
+        <dropColumn tableName="users" columnName="employee_code"/>
+    </changeSet>
+
+</databaseChangeLog>

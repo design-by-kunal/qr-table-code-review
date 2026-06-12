@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Baseline schema (runs on fresh + existing DBs; guarded for idempotency) -->
+    <include file="db/changelog/db.changelog-initial.xml"/>
+    <!-- Create role table first (in case JPA hasn't created it yet) -->
+    <include file="db/changelog/2026-01-27-create-role-table.xml"/>
+
+    <!-- Original seed (kept stable for already-deployed environments) -->
+    <changeSet id="insert-role-data" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="role"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM role WHERE name IN ('HQ_ADMIN','MANAGER','WAITER','CASHIER','KDS')
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <sqlFile path="db/changelog/insert_role_data.sql"/>
+    </changeSet>
+
+    <!-- Safety net: if the original was MARK_RAN before role existed, insert roles now -->
+    <changeSet id="2026-01-27-insert-role-data-v2" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <tableExists tableName="role"/>
+        </preConditions>
+
+        <sqlFile path="db/changelog/insert_role_data_v2.sql"/>
+    </changeSet>
+     <!--changeSet- id="insert-user-data" author="josh">
+        <sqlFile path="db/changelog/insert_user_data.sql"/>
+
+    </changeSet-->
+    <!-- Include migrations in chronological order -->
+    <!-- Original 2025-07-19-add-employee-count changeset is kept for already-deployed DBs
+         but is no longer included for new/fresh databases to avoid failures when the
+         restaurant table has not been created yet. The safe v2 changeset below will
+         conditionally add the column when appropriate. -->
+    <!-- <include file="db/changelog/2025-07-19-add-employee-count.xml"/> -->
+    <!-- Safe v2 changeset to avoid failing when restaurant table is missing on fresh DBs -->
+    <include file="db/changelog/2026-01-28-add-employee-count-safe.xml"/>
+    <include file="db/changelog/2025-07-20-remove-open-close-time.xml"/>
+    <include file="db/changelog/2025-07-21-remove-employee-count.xml"/>
+    <include file="db/changelog/2025-07-30-add-restaurant-codes.xml"/> 
+    <!-- Safe v2 restaurant codes (guarded by tableExists) -->
+    <include file="db/changelog/2026-01-28-add-restaurant-codes-safe.xml"/>
+    <!-- Include the new migration file -->
+     <include file="db/changelog/2025-07-28-login-audit-changes.xml"/> 
+    <!-- Track app type/version per active login session -->
+    <include file="db/changelog/2026-05-07-login-audit-app-metadata.xml"/>
+    <!--<include file="db/changelog/2024-03-21-role-user-updates.xml"/>-->
+    <include file="db/changelog/2025-07-25-remove-shift-columns.xml"/>
+
+    <!--include file="db/changelog/2025-07-25-update-shift-status.xml"/>-->
+
+    <include file="db/changelog/2025-07-30-add_user_code_changelog.xml"/>
+    <!-- Safe v2 user_code / employee_code (guarded by tableExists) -->
+    <include file="db/changelog/2026-01-28-add-user-code-safe.xml"/>
+    <include file="db/changelog/2025-07-30-rename-languageId-languageCode.xml"/>
+    <include file="db/changelog/2025-07-30-remove-must-change-password.xml"/>
+    <!-- UNWANTED seed removed: 2024-03-21-insert-admin-user.xml -->
+    <!-- Fix HQ admin user created_by foreign key issue - must run before insert -->
+    <include file="db/changelog/2026-01-22-fix-admin-user-created-by.xml"/>
+    <!-- Insert HQ admin user -->
+    <include file="db/changelog/2026-01-19-insert-admin-user-HQAdmin.xml"/>
+
+    <!-- Fix HQ admin role mapping by role name (no hardcoded role_id) -->
+    <include file="db/changelog/2026-01-28-fix-hq-admin-role-id.xml"/>
+    <include file="db/changelog/2025-07-30-role-drop-columns.xml"/>
+    <include file ="db/changelog/2025-07-30-language-code-data-type-change.xml"/>
+<!--      < ?>include file="db/changelog/2025-08-05-add-description-to-item-translation.xml"/>-->
+        <include file="db/changelog/2025-08-06-menu-structure-translation-language-code.xml"/>
+    <include file="db/changelog/2025-08-06-drop-language-id-from-menu-structure.xml"/>
+    <include file="db/changelog/2025-08-06-recreate-description-column-item-translation.xml"/>
+    <include file="db/changelog/2025-08-07-modify-dietary-preference-column.xml"/>
+    <!-- Handle case where columns are already UUID (runs before problematic migration) -->
+    <include file="db/changelog/2026-01-22-handle-restaurant-group-uuid-columns.xml"/>
+    <include file="db/changelog/2025-08-05-update-restaurant-group-user-fields.xml"/>
+    <include file="db/changelog/2025-08-06-drop-language-id-from-translations.xml"/>
+
+    <!-- REMOVED: 2025-08-08-add-case-insensitive-unique-constraints.xml - CONFLICTING -->
+    <!-- REMOVED: 2025-08-14-cleanup-duplicate-data.xml - CONFLICTING -->
+    <include file="db/changelog/2025-08-18-fix-restaurant-group-and-restaurant-case-insensitive-unique.xml"/>
+
+    <include file="db/changelog/2025-08-19-unique-constraint-menu.xml"/>
+
+    <include file="db/changelog/2025-08-19-remove-name-constraints.xml"/>
+    <include file="db/changelog/2025-08-20-menu-structure-id-nullable.xml"/>
+
+    <include file="db/changelog/2025-08-20-remove-template-section-columns.xml"/>
+    <include file="db/changelog/2025-08-20-remove-language-id-from-template-section-translation.xml"/>
+    <include file="db/changelog/2025-08-26-drop-old-unique-index-and-create-new.xml"/>
+    <include file="db/changelog/2025-01-27-add-menu-master-id.xml"/>
+    <include file="db/changelog/2025-08-29-remove-menu-translation-unique-constraint.xml"/>
+    <include file="db/changelog/2025-08-28-remove-columns-from-restaurant-layout-tables.xml"/>
+    <include file="db/changelog/2025-08-29-drop-restaurantgroup-constraint.xml"/>
+    <!-- Handle index drops if already dropped -->
+    <include file="db/changelog/2026-01-22-handle-index-drops.xml"/>
+    <include file="db/changelog/2025-08-29-drop-another-uniqueness-restaurantgroup-constraint.xml"/>
+    <include file="db/changelog/2025-01-27-remove-menu-master-id-not-null.xml"/>
+    <include file="db/changelog/2025-01-27-add-archived-status-to-menu.xml"/>
+
+    <!-- <include file="db/changelog/2025-09-01-drop-discount-tables.xml"/>  -->
+    <include file="db/changelog/2025-09-05-add-discount-columns.xml"/>
+    <include file="db/changelog/2025-09-05-update-discount-type-enum.xml"/>
+
+    <include file="db/changelog/2025-01-27-migrate-discount-schedule-days-to-array.xml"/>
+    <include file="db/changelog/2025-01-27-update-happy-hour-to-flat.xml"/>
+
+    <include file="db/changelog/2025-01-27-add-parent-category-id-to-menu-category-mapping.xml"/>
+    <!-- Handle status column drop if already dropped -->
+    <include file="db/changelog/2026-01-22-handle-status-column-drop.xml"/>
+    <include file="db/changelog/2025-01-27-remove-status-from-category-item-mapping.xml"/>
+    <include file="db/changelog/2025-09-12-add-columns-menu-discount-mapping.xml"/>
+
+
+    <!-- v2 changesets to switch to surrogate UUID PKs -->
+    <!-- COMMENTED OUT: No longer needed since we're keeping orphaned records and creating new ones -->
+    <!-- <include file="db/changelog/2025-09-18-menu-category-mapping-pk-v2.xml"/> -->
+    <!-- <include file="db/changelog/2025-09-18-category-item-mapping-pk-v2.xml"/> -->
+
+
+
+    <!-- Add menu_category_mapping_id to category_discount_mapping and backfill -->
+    <include file="db/changelog/2025-09-18-category-discount-mapping-add-mcm-id.xml"/>
+
+    <!-- Add menu_category_mapping_id to category_item_mapping and backfill -->
+    <include file="db/changelog/2025-09-18-category-item-mapping-add-mcm-id.xml"/>
+
+    <!-- Add category_item_mapping_id to item_discount_mapping and backfill -->
+    <include file="db/changelog/2025-09-18-item-discount-mapping-add-cim-id.xml"/>
+
+
+    <!-- Remove temporary columns after successful migration -->
+    <include file="db/changelog/2025-09-18-remove-temp-category-id-from-cdm.xml"/>
+    <include file="db/changelog/2025-09-18-remove-temp-category-id-from-cim.xml"/>
+    <include file="db/changelog/2025-09-18-remove-temp-item-id-from-idm.xml"/>
+
+      <!-- Fix foreign key constraints to reference correct primary key columns -->
+    <include file="db/changelog/2025-09-19-fix-foreign-key-constraints.xml"/>
+    
+    <!-- Handle discount scheduling timetz columns if already converted -->
+    <include file="db/changelog/2026-01-22-handle-discount-scheduling-timetz.xml"/>
+    
+    <!-- Update discount scheduling to support UTC timezone handling -->
+    <include file="db/changelog/2025-01-15-discount-scheduling-utc.xml"/>
+    
+    <!-- Update promotion scheduling to support UTC timezone handling -->
+    <include file="db/changelog/2025-01-15-promotion-scheduling-utc.xml"/>
+    
+    <include file="db/changelog/2025-01-27-rename-discount-free-item-to-bxgy.xml"/>
+
+    <include file="db/changelog/2025-09-19-force-remove-category-id-from-cim.xml"/>
+
+    <!-- Remove valid_from and valid_to columns from discount table -->
+    <include file="db/changelog/2025-01-28-remove-discount-date-columns.xml"/>
+
+    <!-- Remove discount_schedule table since schedules are now managed at menu assignment level -->
+    <include file="db/changelog/2025-01-28-remove-discount-schedule-table.xml"/>
+
+    <!-- Remove valid_from and valid_to columns from promotion table -->
+    <include file="db/changelog/2025-01-28-remove-promotion-date-columns.xml"/>
+
+    <!-- Remove promotion_days_of_week table since schedules are now managed at menu assignment level -->
+    <include file="db/changelog/2025-01-28-remove-promotion-days-table.xml"/>
+
+    <!-- Store notifications.created_at as TIMESTAMPTZ (UTC) -->
+    <include file="db/changelog/2025-12-15-notification-created-at-timestamptz.xml"/>
+        
+
+    <!-- Update combo table datetime columns to support UTC timezone -->
+    <include file="db/changelog/2025-10-04-fix-combo-datetime-timestamptz.xml"/>
+
+    <!-- Revert combo table start_time and end_time columns to TIME for daily recurring times -->
+    <include file="db/changelog/2025-10-04-revert-combo-time-to-time.xml"/>
+
+    <!-- Convert combo start_time and end_time to TIMETZ (UTC) -->
+    <include file="db/changelog/2025-10-06-combo-start-end-to-timetz.xml"/>
+
+    <!-- Add order_number column to orders table -->
+    <include file="db/changelog/2025-10-03-add-order-number-to-orders.xml"/>
+
+
+
+    <!-- Create audit_logging table -->
+    <include file="db/changelog/2025-10-07-create-audit-logging.xml"/>
+
+    <!-- Make transaction_amount nullable -->
+    <include file="db/changelog/2025-10-09-make-transaction-amount-nullable.xml"/>
+
+    <!-- Add receipt_url to transaction table -->
+    <include file="db/changelog/2025-10-09-add-receipt-url-to-transaction.xml"/>
+
+    <!-- Enforce enum-like constraints for user.device_type and user.app_type -->
+    <include file="db/changelog/2025-10-28-user-device-app-type-enums.xml"/>
+
+    <!-- Remove NOT NULL constraint from modifier_item_translation.name -->
+    <include file="db/changelog/2025-11-11-remove-name-not-null-modifier-item-translation.xml"/>
+
+    <!-- Migrate category_kds to use menu_category_mapping_id instead of category_id -->
+    <include file="db/changelog/2025-01-20-category-kds-use-menu-category-mapping.xml"/>
+    <!-- Migrate price_override_mapping to use menu_category_mapping_id -->
+    <include file="db/changelog/2025-11-12-price-override-mapping-mcm.xml"/>
+
+    <!-- Create combo_kds table for linking combos to KDS -->
+    <include file="db/changelog/2025-01-21-create-combo-kds-table.xml"/>
+
+    <!-- Update price_override status check constraint to allow new enum values -->
+    <include file="db/changelog/2025-11-19-update-price-override-status-constraint.xml"/>
+
+    <!-- Store ordered item/combo reasons -->
+    <include file="db/changelog/2025-11-20-add-reason-to-ordered-entities.xml"/>
+
+    <!-- Remove request fields from refund table -->
+    <include file="db/changelog/2025-12-01-remove-request-fields-from-refund.xml"/>
+
+    <!-- Update transaction status constraint to allow PARTIALLY_REFUNDED -->
+    <include file="db/changelog/2025-12-07-add-partially-refunded-to-transaction-status.xml"/>
+
+    <!-- Add table_code column to template_table -->
+    <include file="db/changelog/2025-01-15-add-table-code-to-template-table.xml"/>
+
+    <!-- Add table_code column to restaurant_table -->
+    <include file="db/changelog/2025-01-15-add-table-code-to-restaurant-table.xml"/>
+
+    <!-- Remove cash drawer fields from audit_trail table -->
+    <include file="db/changelog/2025-12-18-remove-cash-drawer-fields-from-audit-trail.xml"/>
+
+
+    <!-- Add is_combo flag to category table -->
+    <include file="db/changelog/2025-12-23-add-is-combo-to-category.xml"/>
+
+    <!-- Convert order and ordered_item datetime columns to TIMESTAMPTZ for UTC support in ticket APIs -->
+    <include file="db/changelog/2025-01-20-order-ticket-datetime-timestamptz.xml"/>
+
+    <!-- Convert reviewed_at and updated_at fields to TIMESTAMPTZ for OffsetDateTime support -->
+    <include file="db/changelog/2025-12-27-convert-reviewed-at-fields-to-timestamptz.xml"/>
+
+    <!-- Add KDS and Cashier live dashboard reset time columns to restaurant table -->
+    <include file="db/changelog/2025-12-19-add-dashboard-reset-times.xml"/>
+    <!-- Safe v2 dashboard reset times (guarded by tableExists) -->
+    <include file="db/changelog/2026-01-28-add-dashboard-reset-times-safe.xml"/>
+
+    <!-- Add NA status to audit_trail.status check constraint for non-request type actions -->
+    <include file="db/changelog/2025-12-27-add-na-status-to-audit-trail.xml"/>
+
+    <!-- Update audit_trail action_type constraint to include ALL ActionType enum values -->
+    <include file="db/changelog/2025-12-29-add-request-action-types-to-audit-trail-constraint.xml"/>
+    <include file="db/changelog/2026-01-05-add-expected-amount-to-cash-drawer-logs.xml"/>
+    <include file="db/changelog/2026-01-05-backfill-expected-amount-in-cash-drawer-logs.xml"/>
+    
+    <!-- Add PAYMENT_AND_FINANCIAL to email_schedule report_type constraint -->
+    <include file="db/changelog/2026-01-08-add-payment-and-financial-to-email-schedule-constraint.xml"/>
+    
+    <!-- Add STAFF_PERFORMANCE to email_schedule report_type constraint -->
+    <include file="db/changelog/2026-01-08-add-staff-performance-to-email-schedule-constraint.xml"/>
+
+    <!-- Convert print_request datetime columns to TIMESTAMPTZ for UTC support -->
+    <include file="db/changelog/2026-01-08-convert-print-request-datetime-to-timestamptz.xml"/>
+
+    <!-- Add MANUAL_DEPOSIT and MANUAL_WITHDRAWAL to cash_drawer_logs event_type constraint -->
+    <include file="db/changelog/2026-01-11-add-manual-drawer-event-types-to-constraint.xml"/>
+
+    <!-- Fix invalid event_type values in cash_drawer_logs and ensure constraint is properly applied -->
+    <include file="db/changelog/2026-01-12-fix-cash-drawer-logs-event-type-constraint.xml"/>
+
+    <!-- Add ADJUSTMENT_APPROVED, ADJUSTMENT_PENDING, and ADJUSTMENT_REJECTED to cash_drawer_logs event_type constraint -->
+    <include file="db/changelog/2026-01-14-add-adjustment-event-types-to-drawer-event-type-constraint.xml"/>
+
+    <!-- Add is_virtual column to restaurant_table -->
+    <include file="db/changelog/2026-01-20-add-is-virtual-to-restaurant-table.xml"/>
+
+    <!-- Convert session datetime columns to TIMESTAMPTZ for timezone consistency -->
+    <include file="db/changelog/2026-01-20-convert-session-datetime-to-timestamptz.xml"/>
+
+    <!-- Add COMBO to promotion type check constraint -->
+    <include file="db/changelog/2026-01-16-add-combo-to-promotion-type-constraint.xml"/>
+
+    <!-- Create sequence for audit_trail log_number to prevent race conditions -->
+    <include file="db/changelog/2026-01-19-create-audit-trail-sequence.xml"/>
+
+    <!-- Add PRICE_OVERRIDE_ACTIVATE to audit_trail action_type constraint -->
+    <include file="db/changelog/2026-01-20-add-price-override-activate-to-audit-trail-constraint.xml"/>
+
+    <!-- Create Quartz scheduler tables -->
+    <include file="db/changelog/2026-01-22-create-quartz-tables.xml"/>
+
+    <!-- Add wastage_source_status columns to ordered_item and ordered_combo for wastage reporting -->
+    <include file="db/changelog/2026-01-21-add-wastage-source-status.xml"/>
+
+    <!-- Convert restaurant_item_availability datetime columns to TIMESTAMPTZ for timezone consistency -->
+    <include file="db/changelog/2026-01-24-convert-restaurant-item-availability-datetime-to-timestamptz.xml"/>
+
+    <!-- Add deleted_reason column to users table for bulk delete operations -->
+    <include file="db/changelog/2026-01-25-add-deleted-reason-to-users.xml"/>
+
+    <!-- Remove obsolete alert_time_context columns from restaurant and restaurant_group -->
+    <include file="db/changelog/2026-01-29-remove-alert-time-context-columns.xml"/>
+
+    <!-- Create shift_translation table and migrate shift_name to translations -->
+    <include file="db/changelog/2026-01-30-shift-translation-table.xml"/>
+
+    <!-- Create default shift with translations -->
+    <include file="db/changelog/2026-01-30-create-default-shift.xml"/>
+
+    <!-- Assign default shift to HQ admin user -->
+    <include file="db/changelog/2026-01-30-assign-shift-to-hq-admin.xml"/>
+
+    <!-- Remove NOT NULL constraint from print_request.filter_url column -->
+    <include file="db/changelog/2026-01-31-remove-not-null-constraint-from-print-request-filter-url.xml"/>
+
+    <!-- Convert shift table start_time and end_time from TIME to TIMETZ for UTC support -->
+    <include file="db/changelog/2026-02-03-convert-shift-time-to-timetz.xml"/>
+
+    <!-- Remove redundant alcohol_flag column from item table -->
+    <include file="db/changelog/2026-02-17-remove-alcohol-flag-from-item.xml"/>
+
+    <!-- Add order tax breakdown columns and ordered_item alcohol_type snapshot -->
+    <include file="db/changelog/2026-02-17-add-order-tax-breakdown-and-ordered-item-alcohol-type.xml"/>
+
+    <!-- Add refund tax breakdown columns to track alcoholic and non-alcoholic tax refund amounts separately -->
+    <include file="db/changelog/2026-02-17-add-refund-tax-breakdown.xml"/>
+
+    <!-- Add consumption-tax taxable base breakdown (alcoholic vs non-alcoholic) -->
+    <include file="db/changelog/2026-03-25-add-order-taxable-amount-breakdown.xml"/>
+
+    <!-- Add consumption-tax taxable base breakdown for refunds (alcoholic vs non-alcoholic) -->
+    <include file="db/changelog/2026-03-25-add-refund-taxable-amount-breakdown.xml"/>
+
+    <!-- Track physical cash tender/change for cash drawer logs -->
+    <include file="db/changelog/2026-04-02-add-gross-cash-in-out-to-cash-drawer-logs.xml"/>
+
+    <!-- Convert operating_hour_slot table from_time and to_time from TIME to TIMETZ for UTC support -->
+    <include file="db/changelog/2026-02-04-convert-operating-hour-slot-time-to-timetz.xml"/>
+
+    <!-- Insert hardcoded OMISE payment gateway setting -->
+    <include file="db/changelog/2026-02-05-insert-omise-payment-setting.xml"/>
+
+    <!-- Create order_sequence table for atomic sequence generation -->
+    <include file="db/changelog/2026-02-06-create-order-sequence-table.xml"/>
+
+    <!-- Create PostgreSQL function for atomic order sequence generation -->
+    <include file="db/changelog/2026-02-07-create-order-sequence-function.xml"/>
+
+    <!-- Remove unique constraint from order_number (order numbers reset daily) -->
+    <include file="db/changelog/2026-02-07-remove-order-number-unique-constraint.xml"/>
+
+    <!-- Remove remaining unique constraints on order_number (v2 - handles multiple constraints) -->
+    <include file="db/changelog/2026-02-07-remove-order-number-unique-constraint-v2.xml"/>
+
+    <!-- Add is_deleted and audit columns to shift table -->
+    <include file="db/changelog/2026-02-08-add-is-deleted-to-shift.xml"/>
+
+    <!-- Add item_order_type column to combo table -->
+    <include file="db/changelog/2026-02-18-add-combo-item-order-type.xml"/>
+
+    <!-- Add REQUEST_SHIFT_DISCREPANCY_APPROVE and REQUEST_SHIFT_DISCREPANCY_DECLINE to audit_trail action_type constraint -->
+    <include file="db/changelog/2026-02-26-add-shift-discrepancy-action-types-to-audit-trail-constraint.xml"/>
+
+    <!-- Update Morning Shift with created_at and created_by -->
+    <include file="db/changelog/2026-02-09-update-morning-shift-created-at-by.xml"/>
+
+    <!-- Convert transaction.created_at to TIMESTAMPTZ for UTC (OffsetDateTime) -->
+    <include file="db/changelog/2026-02-27-convert-transaction-created-at-to-timestamptz.xml"/>
+
+    <!-- Convert LocalDateTime columns to TIMESTAMPTZ (UTC) for OffsetDateTime support across entities -->
+    <include file="db/changelog/2026-03-02-convert-localdatetime-columns-to-timestamptz.xml"/>
+
+    <!-- Add body_key and body_args to notifications for locale-aware body resolution -->
+    <include file="db/changelog/2026-03-04-add-notification-i18n-columns.xml"/>
+
+    <!-- Add additional_data to notifications for requestId and navigation to request details -->
+    <include file="db/changelog/2026-03-12-add-notification-additional-data.xml"/>
+
+    <!-- Add performance optimization indexes based on pg_stat_statements analysis -->
+    <include file="db/changelog/2026-03-12-add-performance-indexes.xml"/>
+
+    <!-- Add additional performance optimization indexes for order filtering and transaction queries -->
+    <include file="db/changelog/2026-03-12-add-additional-performance-indexes.xml"/>
+
+    <!-- Add item_order_type column to category_item_mapping -->
+    <include file="db/changelog/2026-03-21-add-item-order-type-to-category-item-mapping.xml"/>
+
+    <!-- Restaurant contact phone (create/update/detail API) -->
+    <include file="db/changelog/2026-04-03-add-restaurant-phone-number.xml"/>
+
+    <!-- Modifier item business code (CRUD + nested item responses) -->
+    <include file="db/changelog/2026-04-04-add-modifier-code-to-modifier-item.xml"/>
+
+    <!-- Item business code (CRUD, bulk upload, reports) -->
+    <include file="db/changelog/2026-04-05-add-item-code-to-item.xml"/>
+
+    <!-- Cash drawer localized names (translation table; drop single-language name column) -->
+    <include file="db/changelog/2026-04-05-cash-drawer-translation.xml"/>
+
+    <!-- Track whether ordered items/combos were included in completed payment (refund validation) -->
+    <include file="db/changelog/2026-04-28-add-included-in-payment-to-ordered-entities.xml"/>
+
+    <!-- Notification list API: index user + read + sort columns (and type-filtered variant) -->
+    <include file="db/changelog/2026-05-05-add-notifications-list-indexes.xml"/>
+
+    <!-- GMO LinkType Plus: stable OrderID per order (max 27 chars, unique) -->
+    <include file="db/changelog/2026-05-12-add-gmo-link-order-id-to-orders.xml"/>
+
+    <!-- payment_initiator_type: 0=cashier/staff, 1=customer self-pay -->
+    <include file="db/changelog/2026-05-15-add-payment-initiator-type-to-transaction.xml"/>
+
+    <!-- Customer hosted card: cashier_id may be payment.online-card.user-id without users row -->
+    <include file="db/changelog/2026-05-15-drop-transaction-cashier-fk.xml"/>
+
+    <!-- audit_trail user_id/created_by may use payment.online-card.user-id without users row -->
+    <include file="db/changelog/2026-05-15-drop-audit-trail-user-fks-for-online-card.xml"/>
+    <include file="db/changelog/2026-05-15-add-gmo-link-plus-credentials-to-transaction.xml"/>
+
+    <include file="db/changelog/2026-05-21-add-payment-app-to-transaction.xml"/>
+
+    <!-- GMO LinkType Plus hosted card checkout URL (resume / audit) -->
+    <include file="db/changelog/2026-05-25-add-gmo-hosted-payment-url-to-transaction.xml"/>
+
+
+    <include file="db/changelog/2026-05-26-add-is-hide-to-discount-mappings.xml"/>
+
+    <!-- Customer session JWT TTL (token_expiry_at), separate from lifecycle expired_at -->
+    <include file="db/changelog/2026-06-09-add-session-token-expiry-at.xml"/>
+</databaseChangeLog>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-08-20-remove-area-from-template-section" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_section"/>
+            <columnExists tableName="template_section" columnName="area"/>
+        </preConditions>
+        <dropColumn tableName="template_section" columnName="area"/>
+    </changeSet>
+
+    <changeSet id="2025-08-20-remove-status-from-template-section" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_section"/>
+            <columnExists tableName="template_section" columnName="status"/>
+        </preConditions>
+        <dropColumn tableName="template_section" columnName="status"/>
+    </changeSet>
+
+    <changeSet id="2025-08-20-remove-table-layout-template-id-from-template-section" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_section"/>
+            <columnExists tableName="template_section" columnName="table_layout_template_id"/>
+        </preConditions>
+        <dropColumn tableName="template_section" columnName="table_layout_template_id"/>
+    </changeSet>
+
+</databaseChangeLog>

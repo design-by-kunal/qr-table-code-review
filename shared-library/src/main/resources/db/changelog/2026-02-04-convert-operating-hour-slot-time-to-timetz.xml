@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-04-convert-operating-hour-slot-time-to-timetz" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="operating_hour_slot"/>
+                <columnExists tableName="operating_hour_slot" columnName="from_time"/>
+                <columnExists tableName="operating_hour_slot" columnName="to_time"/>
+                <!-- Skip if columns are already timetz -->
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                    AND table_name = 'operating_hour_slot'
+                    AND column_name IN ('from_time', 'to_time')
+                    AND (udt_name = 'timetz' OR data_type = 'time with time zone')
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>Update operating_hour_slot table to support timezone-aware time fields for UTC implementation. Convert from_time and to_time from VARCHAR(255) to TIMETZ (UTC) to match OffsetTime Java type in DTOs and entities.</comment>
+
+        <!-- Convert from_time from VARCHAR(255) to TIMETZ (UTC) -->
+        <!-- First, clean up invalid data by setting invalid time strings to NULL -->
+        <sql>
+            UPDATE operating_hour_slot 
+            SET from_time = NULL 
+            WHERE from_time IS NOT NULL 
+            AND trim(from_time) != ''
+            AND trim(from_time) !~ '^[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?([+-][0-9]{2}:?[0-9]{2}|Z)?$';
+        </sql>
+        
+        <sql>
+            ALTER TABLE operating_hour_slot
+            ALTER COLUMN from_time TYPE timetz USING (
+                CASE 
+                    WHEN from_time IS NULL OR trim(from_time) = '' THEN NULL
+                    -- If already has timezone, parse directly
+                    WHEN trim(from_time) ~ '[+-][0-9]{2}:?[0-9]{2}|Z$' THEN 
+                        CASE 
+                            WHEN trim(from_time) ~ 'Z$' THEN replace(trim(from_time), 'Z', '+00')::timetz
+                            ELSE trim(from_time)::timetz
+                        END
+                    -- Otherwise, parse as TIME first, then convert to TIMETZ with UTC
+                    ELSE (trim(from_time)::time AT TIME ZONE 'UTC')::timetz
+                END
+            );
+        </sql>
+
+        <!-- Convert to_time from VARCHAR(255) to TIMETZ (UTC) -->
+        <!-- First, clean up invalid data by setting invalid time strings to NULL -->
+        <sql>
+            UPDATE operating_hour_slot 
+            SET to_time = NULL 
+            WHERE to_time IS NOT NULL 
+            AND trim(to_time) != ''
+            AND trim(to_time) !~ '^[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?([+-][0-9]{2}:?[0-9]{2}|Z)?$';
+        </sql>
+        
+        <sql>
+            ALTER TABLE operating_hour_slot
+            ALTER COLUMN to_time TYPE timetz USING (
+                CASE 
+                    WHEN to_time IS NULL OR trim(to_time) = '' THEN NULL
+                    -- If already has timezone, parse directly
+                    WHEN trim(to_time) ~ '[+-][0-9]{2}:?[0-9]{2}|Z$' THEN 
+                        CASE 
+                            WHEN trim(to_time) ~ 'Z$' THEN replace(trim(to_time), 'Z', '+00')::timetz
+                            ELSE trim(to_time)::timetz
+                        END
+                    -- Otherwise, parse as TIME first, then convert to TIMETZ with UTC
+                    ELSE (trim(to_time)::time AT TIME ZONE 'UTC')::timetz
+                END
+            );
+        </sql>
+
+        <!-- Add comments for documentation -->
+        <sql>
+            COMMENT ON COLUMN operating_hour_slot.from_time IS 'Operating hour slot start time in UTC (format: HH:MM:SS+00)';
+            COMMENT ON COLUMN operating_hour_slot.to_time IS 'Operating hour slot end time in UTC (format: HH:MM:SS+00)';
+        </sql>
+
+        <rollback>
+            <!-- Rollback: Convert back to VARCHAR(255) -->
+            <sql>
+                ALTER TABLE operating_hour_slot
+                ALTER COLUMN from_time TYPE character varying(255) USING (
+                    CASE 
+                        WHEN from_time IS NULL THEN NULL
+                        ELSE to_char(from_time::time, 'HH24:MI:SS')
+                    END
+                ),
+                ALTER COLUMN to_time TYPE character varying(255) USING (
+                    CASE 
+                        WHEN to_time IS NULL THEN NULL
+                        ELSE to_char(to_time::time, 'HH24:MI:SS')
+                    END
+                );
+            </sql>
+            
+            <!-- Remove comments -->
+            <sql>
+                COMMENT ON COLUMN operating_hour_slot.from_time IS NULL;
+                COMMENT ON COLUMN operating_hour_slot.to_time IS NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

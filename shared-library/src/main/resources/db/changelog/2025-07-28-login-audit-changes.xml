@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- Step 1: Remove old columns if they exist -->
+    <changeSet id="2025-07-28-remove-old-login-audit-columns" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <not>
+                    <tableExists tableName="login_audit"/>
+                </not>
+                <columnExists tableName="login_audit" columnName="action_type"/>
+                <columnExists tableName="login_audit" columnName="performed_at"/>
+                <columnExists tableName="login_audit" columnName="status"/>
+            </or>
+        </preConditions>
+
+        <dropColumn tableName="login_audit" columnName="action_type"/>
+        <dropColumn tableName="login_audit" columnName="performed_at"/>
+        <dropColumn tableName="login_audit" columnName="status"/>
+    </changeSet>
+
+    <!-- Step 2: Add new columns with precheck -->
+    <changeSet id="2025-07-28-add-new-login-audit-columns" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="login_audit"/>
+                <not>
+                    <and>
+                        <columnExists tableName="login_audit" columnName="login_expiry_date"/>
+                        <columnExists tableName="login_audit" columnName="created_by"/>
+                        <columnExists tableName="login_audit" columnName="date_created"/>
+                    </and>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="login_audit">
+            <column name="login_expiry_date" type="timestamp"/>
+            <column name="created_by" type="varchar(255)"/>
+            <column name="date_created" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-04-02-add-gross-cash-in-out-to-cash-drawer-logs" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="cash_drawer_logs"/>
+                <not>
+                    <columnExists tableName="cash_drawer_logs" columnName="gross_in"/>
+                </not>
+                <not>
+                    <columnExists tableName="cash_drawer_logs" columnName="gross_out"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Track physical cash movement (tendered/paid out) separately from net drawer effect.
+            - gross_in: cash physically put into the drawer
+            - gross_out: cash physically taken out of the drawer
+            Net movement remains in amount (existing), to keep reconciliation logic stable.
+        </comment>
+
+        <addColumn tableName="cash_drawer_logs">
+            <column name="gross_in" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="gross_out" type="DECIMAL(10,2)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

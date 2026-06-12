@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-22-handle-index-drops" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group_translation"/>
+                <!-- Only run if final index doesn't exist but old indexes are already gone -->
+                <not>
+                    <indexExists indexName="uniq_name_per_group_language_ci" tableName="restaurant_group_translation"/>
+                </not>
+                <not>
+                    <indexExists indexName="uniq_restaurant_group_translation_name_ci" tableName="restaurant_group_translation"/>
+                </not>
+                <not>
+                    <indexExists indexName="uniq_name_per_group_case_insensitive" tableName="restaurant_group_translation"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Recovery: Create final index if old indexes are already dropped but final index doesn't exist</comment>
+        
+        <!-- Create the final index that should have been created by the original migration -->
+        <createIndex tableName="restaurant_group_translation" indexName="uniq_name_per_group_language_ci" unique="true">
+            <column name="restaurant_group_id"/>
+            <column name="name"/>
+            <column name="language_code"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

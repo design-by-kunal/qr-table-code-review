@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop existing promotion type check constraint if it exists -->
+    <changeSet id="20260116-1-drop-promotion-type-constraint" author="system">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM information_schema.table_constraints 
+                WHERE table_name = 'promotion' 
+                AND constraint_name = 'promotion_type_check'
+                AND constraint_type = 'CHECK'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            ALTER TABLE promotion DROP CONSTRAINT IF EXISTS promotion_type_check;
+        </sql>
+    </changeSet>
+
+    <!-- Add updated constraint with COMBO type included -->
+    <changeSet id="20260116-2-add-promotion-type-constraint-with-combo" author="system">
+        <sql>
+            ALTER TABLE promotion ADD CONSTRAINT promotion_type_check 
+            CHECK (type::text = ANY (ARRAY['DISCOUNT'::character varying, 'GENERIC'::character varying, 'COMBO'::character varying]::text[]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2025-01-27-add-archived-status-to-menu" author="system">
+        <comment>Update menu_status_check constraint to include ARCHIVED status</comment>
+        
+        <!-- Drop the existing check constraint -->
+        <sql>
+            ALTER TABLE menu DROP CONSTRAINT IF EXISTS menu_status_check;
+        </sql>
+        
+        <!-- Add the new check constraint that includes ARCHIVED status -->
+        <sql>
+            ALTER TABLE menu ADD CONSTRAINT menu_status_check 
+            CHECK (status::text = ANY (ARRAY['DRAFT'::character varying, 'PUBLISHED'::character varying, 'ARCHIVED'::character varying]::text[]));
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog> 

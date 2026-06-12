@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Additional performance optimization indexes for high-traffic restaurant ordering system -->
+    <!-- These indexes complement the existing performance indexes to further optimize query performance -->
+
+    <!-- orders indexes -->
+    
+    <!-- Index for filtering orders by order_status -->
+    <!-- Optimizes queries that filter orders by status in dashboard and order management APIs -->
+    <changeSet id="2026-03-12-13-add-orders-status-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+        </preConditions>
+        <comment>Add index on orders.order_status to optimize order filtering by status in dashboard and order APIs</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_orders_order_status
+            ON public.orders(order_status);
+        </sql>
+    </changeSet>
+
+    <!-- Index for filtering orders by order_type -->
+    <!-- Optimizes queries that filter orders by dine-in / takeaway order type -->
+    <changeSet id="2026-03-12-14-add-orders-order-type-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+        </preConditions>
+        <comment>Add index on orders.order_type to optimize filtering by dine-in / takeaway order type</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_orders_order_type
+            ON public.orders(order_type);
+        </sql>
+    </changeSet>
+
+    <!-- Functional index for case-insensitive order_number search -->
+    <!-- Optimizes queries using LOWER(order_number) for case-insensitive order number searches -->
+    <changeSet id="2026-03-12-15-add-orders-order-number-lower-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+            <columnExists tableName="orders" columnName="order_number"/>
+        </preConditions>
+        <comment>Add functional index on LOWER(orders.order_number) to optimize case-insensitive order number searches</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_orders_order_number_lower 
+            ON orders(LOWER(order_number));
+        </sql>
+    </changeSet>
+
+    <!-- sessions indexes -->
+    
+    <!-- Index for querying sessions by expired_at -->
+    <!-- Improves queries checking expired_at IS NULL OR expired_at > now() for active session lookups -->
+    <changeSet id="2026-03-12-16-add-sessions-expired-at-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+        </preConditions>
+        <comment>Add index on sessions.expired_at to improve queries checking expired_at IS NULL OR expired_at > now()</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_sessions_expired_at
+            ON public.sessions(expired_at);
+        </sql>
+    </changeSet>
+
+    <!-- transaction indexes -->
+    
+    <!-- Index for filtering transactions by transaction_status -->
+    <!-- Helps optimize queries that filter transactions by status (e.g., SUCCESS, FAILED, PENDING) -->
+    <changeSet id="2026-03-12-17-add-transaction-status-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+        </preConditions>
+        <comment>Add index on transaction.transaction_status to optimize filtering transactions by status</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_transaction_transaction_status
+            ON public.transaction(transaction_status);
+        </sql>
+    </changeSet>
+
+    <!-- Index for filtering transactions by payment_method -->
+    <!-- Helps optimize queries that filter transactions by payment method (e.g., CASH, CARD, MOBILE) -->
+    <changeSet id="2026-03-12-18-add-transaction-payment-method-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+        </preConditions>
+        <comment>Add index on transaction.payment_method to optimize filtering transactions by payment method</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_transaction_payment_method
+            ON public.transaction(payment_method);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

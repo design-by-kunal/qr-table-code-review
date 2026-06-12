@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert reviewed_at and updated_at fields to TIMESTAMPTZ to support OffsetDateTime -->
+    
+    <!-- Convert orders.additional_discount_reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-1-orders-additional-discount-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+            <columnExists tableName="orders" columnName="additional_discount_reviewed_at"/>
+        </preConditions>
+        <comment>Convert orders.additional_discount_reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE orders
+                ALTER COLUMN additional_discount_reviewed_at TYPE timestamptz
+                USING additional_discount_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert orders.cancellation_reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-2-orders-cancellation-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+            <columnExists tableName="orders" columnName="cancellation_reviewed_at"/>
+        </preConditions>
+        <comment>Convert orders.cancellation_reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE orders
+                ALTER COLUMN cancellation_reviewed_at TYPE timestamptz
+                USING cancellation_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert ordered_item.cancellation_reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-3-ordered-item-cancellation-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item"/>
+            <columnExists tableName="ordered_item" columnName="cancellation_reviewed_at"/>
+        </preConditions>
+        <comment>Convert ordered_item.cancellation_reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE ordered_item
+                ALTER COLUMN cancellation_reviewed_at TYPE timestamptz
+                USING cancellation_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert transaction.updated_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-4-transaction-updated-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+            <columnExists tableName="transaction" columnName="updated_at"/>
+        </preConditions>
+        <comment>Convert transaction.updated_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE transaction
+                ALTER COLUMN updated_at TYPE timestamptz
+                USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert transaction.reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-5-transaction-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+            <columnExists tableName="transaction" columnName="reviewed_at"/>
+        </preConditions>
+        <comment>Convert transaction.reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE transaction
+                ALTER COLUMN reviewed_at TYPE timestamptz
+                USING reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert ordered_combo.updated_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-6-ordered-combo-updated-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_combo"/>
+            <columnExists tableName="ordered_combo" columnName="updated_at"/>
+        </preConditions>
+        <comment>Convert ordered_combo.updated_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE ordered_combo
+                ALTER COLUMN updated_at TYPE timestamptz
+                USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert ordered_combo.cancellation_reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-7-ordered-combo-cancellation-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_combo"/>
+            <columnExists tableName="ordered_combo" columnName="cancellation_reviewed_at"/>
+        </preConditions>
+        <comment>Convert ordered_combo.cancellation_reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE ordered_combo
+                ALTER COLUMN cancellation_reviewed_at TYPE timestamptz
+                USING cancellation_reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert audit_trail.reviewed_at to TIMESTAMPTZ -->
+    <changeSet id="2025-12-27-8-audit-trail-reviewed-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="audit_trail"/>
+            <columnExists tableName="audit_trail" columnName="reviewed_at"/>
+        </preConditions>
+        <comment>Convert audit_trail.reviewed_at to TIMESTAMPTZ for OffsetDateTime support</comment>
+        
+        <sql>
+            ALTER TABLE audit_trail
+                ALTER COLUMN reviewed_at TYPE timestamptz
+                USING reviewed_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

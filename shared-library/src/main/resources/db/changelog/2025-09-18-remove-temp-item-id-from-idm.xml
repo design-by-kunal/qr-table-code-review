@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Optional FK drop guarded separately to satisfy XML order rules -->
+    <changeSet id="2025-09-18-remove-temp-item-id-from-idm-fkdrop" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="item_discount_mapping"/>
+            <foreignKeyConstraintExists foreignKeyName="fk_item_discount_mapping_item"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="item_discount_mapping"
+                                  constraintName="fk_item_discount_mapping_item"/>
+    </changeSet>
+
+    <changeSet id="2025-09-18-remove-temp-item-id-from-idm" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="item_discount_mapping"/>
+            <columnExists tableName="item_discount_mapping" columnName="item_id"/>
+        </preConditions>
+        <comment>
+            Remove temporary item_id column from item_discount_mapping table.
+            All data has been migrated to use category_item_mapping_id.
+        </comment>
+
+        <!-- Drop the column -->
+        <dropColumn tableName="item_discount_mapping" columnName="item_id"/>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-01-15-discount-scheduling-utc" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="menu_discount_mapping"/>
+                <columnExists tableName="menu_discount_mapping" columnName="start_time"/>
+                <columnExists tableName="menu_discount_mapping" columnName="end_time"/>
+                <!-- Skip if columns are already timetz -->
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                    AND table_name = 'menu_discount_mapping'
+                    AND column_name IN ('start_time', 'end_time')
+                    AND (udt_name = 'timetz' OR data_type = 'time with time zone')
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>Update menu_discount_mapping table to support timezone-aware scheduling for UTC implementation</comment>
+
+        <!-- Convert start_time from TIME WITHOUT TIME ZONE to TIMETZ (UTC) -->
+        <sql>
+            ALTER TABLE menu_discount_mapping
+            ALTER COLUMN start_time TYPE timetz USING (to_char(start_time::time, 'HH24:MI:SS') || '+00')::timetz;
+        </sql>
+
+        <!-- Convert end_time from TIME WITHOUT TIME ZONE to TIMETZ (UTC) -->
+        <sql>
+            ALTER TABLE menu_discount_mapping
+            ALTER COLUMN end_time TYPE timetz USING (to_char(end_time::time, 'HH24:MI:SS') || '+00')::timetz;
+        </sql>
+
+        <!-- Add comments for documentation -->
+        <sql>
+            COMMENT ON COLUMN menu_discount_mapping.valid_from IS 'Discount validity start date and time in UTC';
+            COMMENT ON COLUMN menu_discount_mapping.valid_to IS 'Discount validity end date and time in UTC';
+            COMMENT ON COLUMN menu_discount_mapping.start_time IS 'Daily start time in UTC for discount availability';
+            COMMENT ON COLUMN menu_discount_mapping.end_time IS 'Daily end time in UTC for discount availability';
+        </sql>
+
+        <rollback>
+            <!-- Rollback: Convert back to TIME WITHOUT TIME ZONE -->
+            <sql>
+                ALTER TABLE menu_discount_mapping
+                ALTER COLUMN start_time TYPE time USING start_time::time,
+                ALTER COLUMN end_time TYPE time USING end_time::time;
+            </sql>
+            
+            <!-- Remove comments -->
+            <sql>
+                COMMENT ON COLUMN menu_discount_mapping.valid_from IS NULL;
+                COMMENT ON COLUMN menu_discount_mapping.valid_to IS NULL;
+                COMMENT ON COLUMN menu_discount_mapping.start_time IS NULL;
+                COMMENT ON COLUMN menu_discount_mapping.end_time IS NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Add performance indexes for timezone-aware queries -->
+    <changeSet id="2025-01-15-discount-scheduling-indexes" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="menu_discount_mapping"/>
+        </preConditions>
+
+        <comment>Add performance indexes for UTC discount scheduling queries</comment>
+
+        <!-- Index on valid_from for efficient date range queries -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_discount_mapping_valid_from
+            ON public.menu_discount_mapping(valid_from);
+        </sql>
+
+        <!-- Index on valid_to for efficient date range queries -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_discount_mapping_valid_to
+            ON public.menu_discount_mapping(valid_to);
+        </sql>
+
+        <!-- Composite index for active discounts -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_discount_mapping_active
+            ON public.menu_discount_mapping(valid_from, valid_to);
+        </sql>
+
+        <rollback>
+            <dropIndex tableName="menu_discount_mapping" indexName="idx_menu_discount_mapping_valid_from"/>
+            <dropIndex tableName="menu_discount_mapping" indexName="idx_menu_discount_mapping_valid_to"/>
+            <dropIndex tableName="menu_discount_mapping" indexName="idx_menu_discount_mapping_active"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

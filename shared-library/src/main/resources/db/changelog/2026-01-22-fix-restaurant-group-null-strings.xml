@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-01-22-fix-restaurant-group-null-strings" author="josh">
+        <!-- Accept both old and new checksums since the changeset was modified after being marked as ran -->
+        <validCheckSum>9:c986ce59fdc0e61896c4613100928a0e</validCheckSum>
+        <validCheckSum>9:c51062ff052e6bf1d709793cccd6ff21</validCheckSum>
+        
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group"/>
+                <not>
+                    <changeSetExecuted id="2025-08-05-01" author="system" changeLogFile="db/changelog/2025-08-05-update-restaurant-group-user-fields.xml"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Fix restaurant_group table: convert string 'null' values to NULL before UUID conversion</comment>
+
+        <sql>
+            UPDATE restaurant_group 
+            SET created_by = NULL 
+            WHERE created_by::text IN ('null', 'NULL', 'Null', '');
+        </sql>
+
+        <sql>
+            UPDATE restaurant_group 
+            SET updated_by = NULL 
+            WHERE updated_by::text IN ('null', 'NULL', 'Null', '');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

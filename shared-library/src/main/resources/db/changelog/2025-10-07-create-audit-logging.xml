@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-10-07-create-audit-logging" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="audit_logging"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="audit_logging">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="manager_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="employee_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="restaurant_id" type="UUID"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="UUID"/>
+        </createTable>
+
+        <!-- Foreign keys -->
+        <addForeignKeyConstraint
+            baseTableName="audit_logging"
+            baseColumnNames="manager_id"
+            referencedTableName="users"
+            referencedColumnNames="id"
+            constraintName="fk_audit_logging_manager"/>
+
+        <addForeignKeyConstraint
+            baseTableName="audit_logging"
+            baseColumnNames="employee_id"
+            referencedTableName="users"
+            referencedColumnNames="id"
+            constraintName="fk_audit_logging_employee"/>
+
+        <addForeignKeyConstraint
+            baseTableName="audit_logging"
+            baseColumnNames="created_by"
+            referencedTableName="users"
+            referencedColumnNames="id"
+            constraintName="fk_audit_logging_created_by"/>
+
+        <addForeignKeyConstraint
+            baseTableName="audit_logging"
+            baseColumnNames="restaurant_id"
+            referencedTableName="restaurant"
+            referencedColumnNames="id"
+            constraintName="fk_audit_logging_restaurant"/>
+
+        <!-- Indexes for query performance -->
+        <createIndex indexName="idx_audit_logging_manager" tableName="audit_logging">
+            <column name="manager_id"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logging_employee" tableName="audit_logging">
+            <column name="employee_id"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logging_restaurant" tableName="audit_logging">
+            <column name="restaurant_id"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logging_created_at" tableName="audit_logging">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_logging_action_created_at" tableName="audit_logging">
+            <column name="action"/>
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
+

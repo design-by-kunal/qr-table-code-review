@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2025-01-27-01" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists
+                        foreignKeyName="fk_menu_category_mapping_parent_category"
+                        foreignKeyTableName="menu_category_mapping"/>
+            </not>
+        </preConditions>
+
+        <comment>Add parent_category_id column to menu_category_mapping table to support subcategory item mapping queries with parent category reference</comment>
+        
+        <!-- The following addColumn is commented out because the column already exists in the database -->
+        <!--
+        <addColumn tableName="menu_category_mapping">
+            <column name="parent_category_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        -->
+        
+        <!-- Add foreign key constraint for parent_category_id -->
+        <addForeignKeyConstraint baseTableName="menu_category_mapping" 
+                                baseColumnNames="parent_category_id" 
+                                referencedTableName="category" 
+                                referencedColumnNames="id" 
+                                constraintName="fk_menu_category_mapping_parent_category"/>
+        
+        <!-- Note: parent_category_id will be NULL for parent category mappings -->
+        <!-- This field is used as a reference when querying subcategory items -->
+        <!-- to avoid issues with inactive subcategory mappings -->
+        
+    </changeSet>
+
+</databaseChangeLog>

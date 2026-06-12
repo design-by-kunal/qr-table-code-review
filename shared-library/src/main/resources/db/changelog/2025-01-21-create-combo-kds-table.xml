@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-01-21-create-combo-kds-table" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <not>
+                <tableExists tableName="combo_kds"/>
+            </not>
+            <tableExists tableName="combo"/>
+            <tableExists tableName="kds"/>
+        </preConditions>
+
+        <comment>
+            Create combo_kds table to link combos to KDS.
+            This allows combos to be assigned to KDS similar to how categories are assigned.
+        </comment>
+
+        <!-- Create combo_kds table -->
+        <createTable tableName="combo_kds">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="combo_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kds_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Add foreign key constraint to combo table -->
+        <addForeignKeyConstraint baseTableName="combo_kds"
+                                 baseColumnNames="combo_id"
+                                 referencedTableName="combo"
+                                 referencedColumnNames="combo_id"
+                                 constraintName="fk_combo_kds_combo"
+                                 onDelete="CASCADE"/>
+
+        <!-- Add foreign key constraint to kds table -->
+        <addForeignKeyConstraint baseTableName="combo_kds"
+                                 baseColumnNames="kds_id"
+                                 referencedTableName="kds"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_combo_kds_kds"
+                                 onDelete="CASCADE"/>
+
+        <!-- Create unique constraint to prevent duplicate combo-KDS assignments -->
+        <addUniqueConstraint tableName="combo_kds"
+                            columnNames="combo_id, kds_id"
+                            constraintName="uk_combo_kds_combo_kds"/>
+
+        <!-- Create index on kds_id for better query performance -->
+        <createIndex tableName="combo_kds" indexName="idx_combo_kds_kds_id">
+            <column name="kds_id"/>
+        </createIndex>
+
+        <!-- Create index on combo_id for better query performance -->
+        <createIndex tableName="combo_kds" indexName="idx_combo_kds_combo_id">
+            <column name="combo_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

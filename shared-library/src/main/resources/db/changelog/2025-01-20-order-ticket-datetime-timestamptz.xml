@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Change order and ordered_item datetime columns to TIMESTAMPTZ for UTC support in ticket APIs -->
+    <changeSet id="2025-01-20-1-order-created-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="order"/>
+            <columnExists tableName="order" columnName="created_at"/>
+        </preConditions>
+        <comment>Convert order.created_at to TIMESTAMPTZ for UTC support in ticket APIs</comment>
+        
+        <!-- Convert existing timestamp values assuming they are in UTC, and change type to timestamptz -->
+        <sql>
+            ALTER TABLE "order"
+                ALTER COLUMN created_at TYPE timestamptz
+                USING created_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-01-20-2-ordered-item-created-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item"/>
+            <columnExists tableName="ordered_item" columnName="created_at"/>
+        </preConditions>
+        <comment>Convert ordered_item.created_at to TIMESTAMPTZ for UTC support in ticket APIs</comment>
+        
+        <!-- Convert existing timestamp values assuming they are in UTC, and change type to timestamptz -->
+        <sql>
+            ALTER TABLE ordered_item
+                ALTER COLUMN created_at TYPE timestamptz
+                USING created_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-01-20-3-ordered-item-updated-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item"/>
+            <columnExists tableName="ordered_item" columnName="updated_at"/>
+        </preConditions>
+        <comment>Convert ordered_item.updated_at to TIMESTAMPTZ for UTC support in ticket APIs</comment>
+        
+        <!-- Convert existing timestamp values assuming they are in UTC, and change type to timestamptz -->
+        <sql>
+            ALTER TABLE ordered_item
+                ALTER COLUMN updated_at TYPE timestamptz
+                USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-01-20-4-order-updated-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="order"/>
+            <columnExists tableName="order" columnName="updated_at"/>
+        </preConditions>
+        <comment>Convert order.updated_at to TIMESTAMPTZ for UTC support</comment>
+        
+        <!-- Convert existing timestamp values assuming they are in UTC, and change type to timestamptz -->
+        <sql>
+            ALTER TABLE "order"
+                ALTER COLUMN updated_at TYPE timestamptz
+                USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

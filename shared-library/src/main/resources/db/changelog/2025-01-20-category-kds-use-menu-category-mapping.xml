@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-01-20-category-kds-add-mcm-id" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_kds"/>
+            <tableExists tableName="kds"/>
+            <tableExists tableName="menu_category_mapping"/>
+            <tableExists tableName="restaurant_menu_mapping"/>
+            <not>
+                <columnExists tableName="category_kds" columnName="menu_category_mapping_id"/>
+            </not>
+        </preConditions>
+
+        <comment>
+            Add menu_category_mapping_id to category_kds, backfill from existing category_id by finding 
+            the MenuCategoryMapping that belongs to a menu assigned to the KDS's restaurant.
+            This ensures restaurant-menu-specific category assignments to KDS.
+        </comment>
+
+        <!-- Add new nullable column -->
+        <addColumn tableName="category_kds">
+            <column name="menu_category_mapping_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Backfill: Find MenuCategoryMapping for each category that belongs to a menu assigned to the KDS's restaurant -->
+        <sql>
+            UPDATE category_kds ck
+            SET menu_category_mapping_id = sub.mcm_id
+            FROM (
+                SELECT DISTINCT ON (ck2.id)
+                    ck2.id AS ck_id,
+                    mcm.id AS mcm_id
+                FROM category_kds ck2
+                INNER JOIN kds k ON k.id = ck2.kds_id
+                INNER JOIN category c ON c.id = ck2.category_id
+                INNER JOIN menu_category_mapping mcm ON mcm.category_id = c.id
+                INNER JOIN restaurant_menu_mapping rmm ON rmm.menu_id = mcm.menu_id
+                WHERE rmm.restaurant_id = k.restaurant_id
+                ORDER BY ck2.id, mcm.id DESC
+            ) sub
+            WHERE ck.id = sub.ck_id
+              AND ck.menu_category_mapping_id IS NULL;
+        </sql>
+
+        <!-- Make column not null once backfilled (if any missing, leave nullable to avoid failure) -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM category_kds WHERE menu_category_mapping_id IS NULL
+                ) THEN
+                    EXECUTE 'ALTER TABLE public.category_kds ALTER COLUMN menu_category_mapping_id SET NOT NULL';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Add FK -->
+        <addForeignKeyConstraint baseTableName="category_kds"
+                                 baseColumnNames="menu_category_mapping_id"
+                                 referencedTableName="menu_category_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_ck_menu_category_mapping"/>
+
+    </changeSet>
+
+    <!-- Optional FK drop guarded separately to satisfy XML order rules -->
+    <changeSet id="2025-01-20-category-kds-remove-category-id-fkdrop" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_kds"/>
+            <foreignKeyConstraintExists foreignKeyName="fk_category_kds_category"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="category_kds"
+                                  constraintName="fk_category_kds_category"/>
+    </changeSet>
+
+    <changeSet id="2025-01-20-category-kds-remove-category-id" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_kds"/>
+            <columnExists tableName="category_kds" columnName="category_id"/>
+        </preConditions>
+        <comment>
+            Remove temporary category_id column from category_kds table.
+            All data has been migrated to use menu_category_mapping_id.
+        </comment>
+
+        <!-- Drop the column -->
+        <dropColumn tableName="category_kds" columnName="category_id"/>
+    </changeSet>
+
+</databaseChangeLog>
+

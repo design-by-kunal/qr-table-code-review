@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="2026-05-12-add-gmo-link-order-id-column" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="orders"/>
+                <not>
+                    <columnExists tableName="orders" columnName="gmo_link_order_id"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="orders">
+            <column name="gmo_link_order_id" type="varchar(27)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-05-12-unique-index-gmo-link-order-id" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="orders"/>
+                <columnExists tableName="orders" columnName="gmo_link_order_id"/>
+                <not>
+                    <indexExists tableName="orders" indexName="ux_orders_gmo_link_order_id"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <sql dbms="postgresql">
+            CREATE UNIQUE INDEX ux_orders_gmo_link_order_id ON orders (gmo_link_order_id)
+            WHERE gmo_link_order_id IS NOT NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

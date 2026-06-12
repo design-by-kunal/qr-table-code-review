@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2025-08-05-01" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group"/>
+                <columnExists tableName="restaurant_group" columnName="created_by"/>
+                <columnExists tableName="restaurant_group" columnName="updated_by"/>
+                <!-- Skip if foreign keys already exist (columns are already UUID) -->
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'fk_restaurant_group_created_by'
+                    AND table_name = 'restaurant_group'
+                </sqlCheck>
+            </and>
+        </preConditions>
+        <comment>Update restaurant_group created_by and updated_by columns from VARCHAR to UUID</comment>
+        
+        <!-- Convert created_by column to UUID using custom SQL -->
+        <sql>
+            ALTER TABLE restaurant_group 
+            ALTER COLUMN created_by TYPE UUID 
+            USING CASE 
+                WHEN created_by IS NULL OR created_by = 'null' OR created_by = '' THEN NULL
+                ELSE created_by::UUID 
+            END;
+        </sql>
+        
+        <!-- Convert updated_by column to UUID using custom SQL -->
+        <sql>
+            ALTER TABLE restaurant_group 
+            ALTER COLUMN updated_by TYPE UUID 
+            USING CASE 
+                WHEN updated_by IS NULL OR updated_by = 'null' OR updated_by = '' THEN NULL
+                ELSE updated_by::UUID 
+            END;
+        </sql>
+        
+        <!-- Add foreign key constraints -->
+        <addForeignKeyConstraint baseTableName="restaurant_group" 
+                                baseColumnNames="created_by" 
+                                referencedTableName="users" 
+                                referencedColumnNames="id" 
+                                constraintName="fk_restaurant_group_created_by"/>
+        
+        <addForeignKeyConstraint baseTableName="restaurant_group" 
+                                baseColumnNames="updated_by" 
+                                referencedTableName="users" 
+                                referencedColumnNames="id" 
+                                constraintName="fk_restaurant_group_updated_by"/>
+    </changeSet>
+
+</databaseChangeLog> 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add order_number column to orders table -->
+    <changeSet id="add-order-number-to-orders" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="orders" columnName="order_number"/>
+            </not>
+        </preConditions>
+        
+        <!-- Step 1: Add column as nullable first -->
+        <addColumn tableName="orders">
+            <column name="order_number" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Populate existing records with order numbers -->
+    <changeSet id="populate-existing-order-numbers" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="orders" columnName="order_number"/>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM orders WHERE order_number IS NOT NULL
+            </sqlCheck>
+        </preConditions>
+        
+        <sql>
+            WITH numbered_orders AS (
+                SELECT id, 
+                       'R001-ORD-' || TO_CHAR(created_at, 'YYYYMMDD') || '-' || LPAD(ROW_NUMBER() OVER (ORDER BY created_at)::text, 4, '0') as new_order_number
+                FROM orders 
+                WHERE order_number IS NULL
+            )
+            UPDATE orders 
+            SET order_number = numbered_orders.new_order_number
+            FROM numbered_orders
+            WHERE orders.id = numbered_orders.id;
+        </sql>
+    </changeSet>
+
+    <!-- Make column NOT NULL and UNIQUE -->
+    <changeSet id="make-order-number-not-null-unique" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="orders" columnName="order_number"/>
+            <not>
+                <indexExists indexName="uk_orders_order_number"/>
+            </not>
+        </preConditions>
+        
+        <addNotNullConstraint tableName="orders" columnName="order_number" columnDataType="VARCHAR(255)"/>
+        <addUniqueConstraint tableName="orders" columnNames="order_number" constraintName="uk_orders_order_number"/>
+    </changeSet>
+
+</databaseChangeLog>

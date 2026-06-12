@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add item_order_type column to combo table -->
+    <changeSet id="2026-02-18-add-combo-item-order-type" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="combo" columnName="item_order_type"/>
+            </not>
+        </preConditions>
+        
+        <addColumn tableName="combo">
+            <column name="item_order_type" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <comment>Add item_order_type column to combo table to support DINE_IN, TAKEAWAY, or BOTH filtering</comment>
+    </changeSet>
+
+</databaseChangeLog>

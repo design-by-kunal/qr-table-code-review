@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Step 1: Add menu_master_id column (nullable at first) -->
+    <changeSet id="2025-01-27-1-add-menu-master-id-column" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="menu" columnName="menu_master_id"/>
+            </not>
+        </preConditions>
+        <comment>Add menu_master_id column to menu table</comment>
+        <addColumn tableName="menu">
+            <column name="menu_master_id" type="uuid"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2: Populate menu_master_id for existing menus -->
+    <changeSet id="2025-01-27-2-populate-menu-master-id" author="system">
+        <comment>Populate menu_master_id for existing menus - group by menu_structure_id and version</comment>
+        <sql>
+            -- Update menus that have the same menu_structure_id to share the same menu_master_id
+            -- For each menu_structure_id, we'll use the ID of the first menu as the menu_master_id
+            UPDATE menu 
+            SET menu_master_id = (
+                SELECT m2.id 
+                FROM menu m2 
+                WHERE m2.menu_structure_id = menu.menu_structure_id 
+                AND m2.menu_structure_id IS NOT NULL
+                ORDER BY m2.created_at ASC, m2.id ASC 
+                LIMIT 1
+            )
+            WHERE menu.menu_structure_id IS NOT NULL 
+            AND menu.menu_master_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 3: Handle menus without menu_structure_id -->
+    <changeSet id="2025-01-27-3-populate-menu-master-id-for-null-structure" author="system">
+        <comment>Populate menu_master_id for menus without menu_structure_id - each gets its own master ID</comment>
+        <sql>
+            -- For menus without menu_structure_id, set their own ID as menu_master_id
+            UPDATE menu 
+            SET menu_master_id = id
+            WHERE menu_structure_id IS NULL 
+            AND menu_master_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 4: Make menu_master_id NOT NULL after population -->
+    <changeSet id="2025-01-27-4-make-menu-master-id-not-null" author="system">
+        <comment>Make menu_master_id NOT NULL after all data is populated</comment>
+        <addNotNullConstraint 
+            tableName="menu" 
+            columnName="menu_master_id" 
+            columnDataType="uuid"/>
+    </changeSet>
+
+    <!-- Step 5: Add index on menu_master_id for better performance -->
+    <changeSet id="2025-01-27-5-add-menu-master-id-index" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_menu_master_id" tableName="menu" schemaName="public"/>
+            </not>
+        </preConditions>
+        <comment>Add index on menu_master_id for better query performance</comment>
+        <createIndex 
+            tableName="menu" 
+            indexName="idx_menu_master_id">
+            <column name="menu_master_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+

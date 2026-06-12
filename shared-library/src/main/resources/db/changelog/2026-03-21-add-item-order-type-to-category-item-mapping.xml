@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-03-21-add-item-order-type-to-category-item-mapping" author="codex">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="category_item_mapping"/>
+                <not>
+                    <columnExists tableName="category_item_mapping" columnName="item_order_type"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="category_item_mapping">
+            <column name="item_order_type" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <comment>Add item_order_type to category_item_mapping to store DINE_IN/TAKEAWAY/BOTH per mapped item.</comment>
+    </changeSet>
+
+    <changeSet id="2026-03-21-add-item-order-type-index-to-category-item-mapping" author="codex">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="category_item_mapping"/>
+                <columnExists tableName="category_item_mapping" columnName="item_order_type"/>
+                <not>
+                    <indexExists tableName="category_item_mapping" indexName="idx_cim_mcm_order_type"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <createIndex tableName="category_item_mapping" indexName="idx_cim_mcm_order_type">
+            <column name="menu_category_mapping_id"/>
+            <column name="item_order_type"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="2026-06-09-add-session-token-expiry-at" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+            <not>
+                <columnExists tableName="sessions" columnName="token_expiry_at"/>
+            </not>
+        </preConditions>
+        <comment>Add token_expiry_at for customer session JWT TTL (mirrors login_audit.login_expiry_date)</comment>
+
+        <addColumn tableName="sessions">
+            <column name="token_expiry_at" type="TIMESTAMPTZ"/>
+        </addColumn>
+
+        <sql>
+            UPDATE sessions
+            SET token_expiry_at = issued_at + INTERVAL '24 hours'
+            WHERE expired_at IS NULL
+              AND token_expiry_at IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

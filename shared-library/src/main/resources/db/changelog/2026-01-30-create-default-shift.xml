@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-01-30-create-default-shift" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="shift"/>
+                <tableExists tableName="shift_translation"/>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM shift_translation WHERE name = 'Morning Shift' AND language_code = 'en'
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>
+            Create a default shift (Morning Shift) with translations in English, Japanese, and Thai.
+            This shift will be used for the HQ admin user.
+        </comment>
+
+        <sql>
+            -- Insert default shift with explicitly generated UUID
+            WITH new_shift AS (
+                INSERT INTO shift (
+                    id,
+                    start_time,
+                    end_time,
+                    status
+                ) VALUES (
+                    gen_random_uuid(),
+                    '09:00:00',
+                    '17:00:00',
+                    'ACTIVE'
+                )
+                RETURNING id
+            )
+            -- Insert translations for the shift using the generated ID
+            INSERT INTO shift_translation (id, shift_id, language_code, name)
+            SELECT 
+                gen_random_uuid(),
+                new_shift.id,
+                language_code,
+                name
+            FROM new_shift
+            CROSS JOIN (VALUES
+                ('en', 'Morning Shift'),
+                ('ja', '朝シフト'),
+                ('th', 'กะเช้า')
+            ) AS translations(language_code, name);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

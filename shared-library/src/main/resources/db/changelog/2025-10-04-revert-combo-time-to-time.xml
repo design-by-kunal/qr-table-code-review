@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="2025-10-04-revert-combo-time-to-time" author="system">
+        <comment>Revert combo table start_time and end_time columns from TIMESTAMPTZ to TIME for daily recurring times</comment>
+        
+        <!-- Update combo table start_time column to TIME -->
+        <sql>ALTER TABLE combo ALTER COLUMN start_time TYPE TIME USING (start_time::TIME)</sql>
+        
+        <!-- Update combo table end_time column to TIME -->
+        <sql>ALTER TABLE combo ALTER COLUMN end_time TYPE TIME USING (end_time::TIME)</sql>
+        
+        <rollback>
+            <!-- Rollback: Convert combo table back to TIMESTAMPTZ -->
+            <sql>ALTER TABLE combo ALTER COLUMN start_time TYPE TIMESTAMPTZ USING (CURRENT_DATE + start_time) AT TIME ZONE 'UTC'</sql>
+            <sql>ALTER TABLE combo ALTER COLUMN end_time TYPE TIMESTAMPTZ USING (CURRENT_DATE + end_time) AT TIME ZONE 'UTC'</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

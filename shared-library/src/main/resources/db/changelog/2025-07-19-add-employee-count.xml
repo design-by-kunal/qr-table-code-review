@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-07-19-add-employee-count" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="restaurant" columnName="employee_count"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="restaurant">
+            <column name="employee_count" type="INTEGER">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2025-07-19-add-restaurant-group-name" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="restaurant" columnName="restaurant_group_name"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="restaurant">
+            <column name="restaurant_group_name" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog> 

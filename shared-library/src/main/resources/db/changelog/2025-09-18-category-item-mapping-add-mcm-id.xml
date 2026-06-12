@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-category-item-mapping-add-mcm-id" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+            <not>
+                <columnExists tableName="category_item_mapping" columnName="menu_category_mapping_id"/>
+            </not>
+        </preConditions>
+
+        <comment>Add menu_category_mapping_id to category_item_mapping, backfill from menu_category_mapping by category_id, add FK and unique constraint with item_id.</comment>
+
+        <addColumn tableName="category_item_mapping">
+            <column name="menu_category_mapping_id" type="UUID">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <sql>
+            UPDATE category_item_mapping cim
+            SET menu_category_mapping_id = sub.mcm_id
+            FROM (
+                SELECT DISTINCT ON (mcm.category_id)
+                    mcm.category_id,
+                    mcm.id AS mcm_id
+                FROM menu_category_mapping mcm
+                ORDER BY mcm.category_id, mcm.id DESC
+            ) sub
+            WHERE cim.category_id = sub.category_id
+              AND cim.menu_category_mapping_id IS NULL;
+        </sql>
+
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM category_item_mapping WHERE menu_category_mapping_id IS NULL
+                ) THEN
+                    EXECUTE 'ALTER TABLE public.category_item_mapping ALTER COLUMN menu_category_mapping_id SET NOT NULL';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <addForeignKeyConstraint baseTableName="category_item_mapping"
+                                 baseColumnNames="menu_category_mapping_id"
+                                 referencedTableName="menu_category_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_cim_menu_category_mapping"/>
+
+        <addUniqueConstraint tableName="category_item_mapping"
+                             columnNames="menu_category_mapping_id, item_id"
+                             constraintName="uk_cim_mcm_item"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+
+

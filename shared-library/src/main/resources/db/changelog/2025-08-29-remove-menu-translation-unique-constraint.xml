@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="20250829-01-remove-menu-translation-unique-constraint" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <indexExists 
+                indexName="uniq_menu_translation_name_lang" 
+                tableName="menu_translation"/>
+        </preConditions>
+        <comment>Remove case-insensitive unique index on (LOWER(name), language_code) from menu_translation table</comment>
+        <sql>
+            DROP INDEX IF EXISTS uniq_menu_translation_name_lang;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog> 

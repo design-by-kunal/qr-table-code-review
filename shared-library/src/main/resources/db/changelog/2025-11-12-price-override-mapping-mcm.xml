@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-11-12-price-override-add-mcm-column" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override_mapping"/>
+            <not>
+                <columnExists tableName="price_override_mapping" columnName="menu_category_mapping_id"/>
+            </not>
+        </preConditions>
+        <comment>Add menu_category_mapping_id column to price_override_mapping table</comment>
+        <addColumn tableName="price_override_mapping">
+            <column name="menu_category_mapping_id" type="UUID"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2025-11-12-price-override-drop-old-constraints" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override_mapping"/>
+        </preConditions>
+        <comment>Drop old check constraints on price_override_mapping</comment>
+        <sql>
+            ALTER TABLE price_override_mapping DROP CONSTRAINT IF EXISTS price_override_mapping_check;
+        </sql>
+        <sql>
+            ALTER TABLE price_override_mapping DROP CONSTRAINT IF EXISTS price_override_mapping_chk;
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-11-12-price-override-drop-category-fk" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override_mapping"/>
+            <columnExists tableName="price_override_mapping" columnName="category_id"/>
+        </preConditions>
+        <comment>Drop foreign key constraint on category_id if it exists</comment>
+        <sql splitStatements="false">
+            DO $$
+            DECLARE
+                constraint_name text;
+            BEGIN
+                SELECT conname INTO constraint_name
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                JOIN pg_namespace n ON t.relnamespace = n.oid
+                WHERE n.nspname = 'public'
+                  AND t.relname = 'price_override_mapping'
+                  AND c.contype = 'f'
+                  AND array_to_string(c.conkey, ',') = (
+                      SELECT array_to_string(array_agg(a.attnum), ',')
+                      FROM pg_attribute a
+                      WHERE a.attrelid = t.oid
+                        AND a.attname = 'category_id'
+                  );
+                
+                IF constraint_name IS NOT NULL THEN
+                    EXECUTE 'ALTER TABLE public.price_override_mapping DROP CONSTRAINT ' || constraint_name;
+                END IF;
+            END;
+            $$;
+        </sql>
+    </changeSet>
+
+    <changeSet id="2025-11-12-price-override-drop-category" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override_mapping"/>
+            <columnExists tableName="price_override_mapping" columnName="category_id"/>
+        </preConditions>
+        <comment>Remove category_id column from price_override_mapping table. All data will be migrated manually.</comment>
+        <dropColumn tableName="price_override_mapping" columnName="category_id"/>
+    </changeSet>
+
+    <changeSet id="2025-11-12-price-override-add-fk" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="price_override_mapping"/>
+            <tableExists tableName="menu_category_mapping"/>
+            <columnExists tableName="price_override_mapping" columnName="menu_category_mapping_id"/>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_price_override_mapping_mcm"/>
+            </not>
+        </preConditions>
+        <comment>Add foreign key constraint from price_override_mapping.menu_category_mapping_id to menu_category_mapping.id</comment>
+        <addForeignKeyConstraint constraintName="fk_price_override_mapping_mcm"
+                                  baseTableName="price_override_mapping"
+                                  baseColumnNames="menu_category_mapping_id"
+                                  referencedTableName="menu_category_mapping"
+                                  referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>
+

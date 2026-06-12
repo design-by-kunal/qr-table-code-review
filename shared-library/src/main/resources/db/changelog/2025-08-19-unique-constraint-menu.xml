@@ -1,0 +1,23 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="20250819-01-unique-index-menu-translation" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists 
+                    indexName="uniq_menu_translation_name_lang" 
+                    tableName="menu_translation"/>
+            </not>
+        </preConditions>
+
+        <comment>Create case-insensitive unique index on (LOWER(name), language_code)</comment>
+        <sql>
+            CREATE UNIQUE INDEX uniq_menu_translation_name_lang
+            ON menu_translation (LOWER(name), language_code);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

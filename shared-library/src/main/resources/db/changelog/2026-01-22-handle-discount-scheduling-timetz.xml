@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-22-handle-discount-scheduling-timetz" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="menu_discount_mapping"/>
+                <columnExists tableName="menu_discount_mapping" columnName="start_time"/>
+                <columnExists tableName="menu_discount_mapping" columnName="end_time"/>
+                <!-- Only run if columns are already timetz -->
+                <sqlCheck expectedResult="2">
+                    SELECT COUNT(*) FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                    AND table_name = 'menu_discount_mapping'
+                    AND column_name IN ('start_time', 'end_time')
+                    AND (udt_name = 'timetz' OR data_type = 'time with time zone')
+                </sqlCheck>
+                <!-- Only run if the original migration has NOT been executed yet -->
+                <not>
+                    <changeSetExecuted id="2025-01-15-discount-scheduling-utc" author="system" changeLogFile="db/changelog/2025-01-15-discount-scheduling-utc.xml"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Handle case where discount scheduling columns are already timetz but original migration hasn't run yet</comment>
+        
+        <!-- This changeset does nothing - it just marks that we've checked the state -->
+        <!-- The original migration will be skipped by its own precondition if columns are already timetz -->
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-01-15-promotion-scheduling-utc" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="menu_promotion_mapping"/>
+            <columnExists tableName="menu_promotion_mapping" columnName="valid_from"/>
+            <columnExists tableName="menu_promotion_mapping" columnName="valid_to"/>
+        </preConditions>
+
+        <comment>Update menu_promotion_mapping table to support timezone-aware scheduling for UTC implementation</comment>
+
+        <!-- Convert valid_from from TIMESTAMP WITHOUT TIME ZONE to TIMESTAMPTZ (UTC) -->
+        <sql>
+            ALTER TABLE menu_promotion_mapping
+            ALTER COLUMN valid_from TYPE timestamptz USING (valid_from AT TIME ZONE 'UTC');
+        </sql>
+
+        <!-- Convert valid_to from TIMESTAMP WITHOUT TIME ZONE to TIMESTAMPTZ (UTC) -->
+        <sql>
+            ALTER TABLE menu_promotion_mapping
+            ALTER COLUMN valid_to TYPE timestamptz USING (valid_to AT TIME ZONE 'UTC');
+        </sql>
+
+        <!-- Add comments for documentation -->
+        <sql>
+            COMMENT ON COLUMN menu_promotion_mapping.valid_from IS 'Promotion validity start date and time in UTC';
+            COMMENT ON COLUMN menu_promotion_mapping.valid_to IS 'Promotion validity end date and time in UTC';
+        </sql>
+
+        <rollback>
+            <!-- Rollback: Convert back to TIMESTAMP WITHOUT TIME ZONE -->
+            <sql>
+                ALTER TABLE menu_promotion_mapping
+                ALTER COLUMN valid_from TYPE timestamp USING (valid_from AT TIME ZONE 'UTC'),
+                ALTER COLUMN valid_to TYPE timestamp USING (valid_to AT TIME ZONE 'UTC');
+            </sql>
+            
+            <!-- Remove comments -->
+            <sql>
+                COMMENT ON COLUMN menu_promotion_mapping.valid_from IS NULL;
+                COMMENT ON COLUMN menu_promotion_mapping.valid_to IS NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Add performance indexes for timezone-aware queries -->
+    <changeSet id="2025-01-15-promotion-scheduling-indexes" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="menu_promotion_mapping"/>
+        </preConditions>
+
+        <comment>Add performance indexes for UTC promotion scheduling queries</comment>
+
+        <!-- Index on valid_from for efficient date range queries -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_promotion_mapping_valid_from
+            ON public.menu_promotion_mapping(valid_from);
+        </sql>
+
+        <!-- Index on valid_to for efficient date range queries -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_promotion_mapping_valid_to
+            ON public.menu_promotion_mapping(valid_to);
+        </sql>
+
+        <!-- Composite index for active promotions -->
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_menu_promotion_mapping_active
+            ON public.menu_promotion_mapping(valid_from, valid_to);
+        </sql>
+
+        <rollback>
+            <dropIndex tableName="menu_promotion_mapping" indexName="idx_menu_promotion_mapping_valid_from"/>
+            <dropIndex tableName="menu_promotion_mapping" indexName="idx_menu_promotion_mapping_valid_to"/>
+            <dropIndex tableName="menu_promotion_mapping" indexName="idx_menu_promotion_mapping_active"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

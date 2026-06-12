@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-17-add-alcoholic-tax-amount" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="orders"/>
+                <not>
+                    <columnExists tableName="orders" columnName="alcoholic_tax_amount"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Add alcoholic_tax_amount column to orders table for tax breakdown.
+        </comment>
+
+        <addColumn tableName="orders">
+            <column name="alcoholic_tax_amount" type="NUMERIC(10,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-02-17-add-non-alcoholic-tax-amount" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="orders"/>
+                <not>
+                    <columnExists tableName="orders" columnName="non_alcoholic_tax_amount"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Add non_alcoholic_tax_amount column to orders table for tax breakdown.
+        </comment>
+
+        <addColumn tableName="orders">
+            <column name="non_alcoholic_tax_amount" type="NUMERIC(10,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-02-17-add-alcohol-type-to-ordered-item" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="ordered_item"/>
+                <not>
+                    <columnExists tableName="ordered_item" columnName="alcohol_type"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Add alcohol_type column to ordered_item to snapshot item alcohol type at order time.
+        </comment>
+
+        <addColumn tableName="ordered_item">
+            <column name="alcohol_type" type="VARCHAR(32)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

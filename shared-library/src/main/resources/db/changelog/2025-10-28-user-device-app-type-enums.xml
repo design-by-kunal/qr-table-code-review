@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop old constraints if they exist -->
+    <changeSet id="20251028-1-drop-old-constraints" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_device_type_check;
+            ALTER TABLE users DROP CONSTRAINT IF EXISTS users_app_type_check;
+        </sql>
+    </changeSet>
+
+    <!-- Update existing values to uppercase to match enum names -->
+    <changeSet id="20251028-2-normalize-values" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="device_type"/>
+            <columnExists tableName="users" columnName="app_type"/>
+        </preConditions>
+        <sql>
+            UPDATE users SET device_type = UPPER(device_type) WHERE device_type IS NOT NULL;
+            UPDATE users SET app_type = UPPER(app_type) WHERE app_type IS NOT NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Add check constraint for device_type enum values -->
+    <changeSet id="20251028-3-add-device-type-constraint" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="device_type"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE users ADD CONSTRAINT users_device_type_check 
+            CHECK (device_type::text = ANY (ARRAY['ANDROID'::character varying, 'IOS'::character varying, 'WEB'::character varying]::text[]));
+        </sql>
+    </changeSet>
+
+    <!-- Add check constraint for app_type enum values -->
+    <changeSet id="20251028-4-add-app-type-constraint" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="app_type"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE users ADD CONSTRAINT users_app_type_check 
+            CHECK (app_type::text = ANY (ARRAY['HQADMIN'::character varying, 'CASHIER'::character varying, 'WAITER'::character varying, 'MANAGER'::character varying, 'KDS'::character varying]::text[]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+
+

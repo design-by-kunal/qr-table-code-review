@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-category-item-mapping-composite-pk" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_item_mapping"/>
+        </preConditions>
+
+        <comment>
+            Ensure category_item_mapping uses composite primary key (category_id, item_id)
+            to match JPA @EmbeddedId mapping. Pre-clean duplicates and add PK safely.
+        </comment>
+
+        <!-- Drop a known unique index if present to avoid conflicts -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_indexes 
+                    WHERE schemaname = 'public' AND indexname = 'uk_category_item_mapping_unique'
+                ) THEN
+                    EXECUTE 'DROP INDEX public.uk_category_item_mapping_unique';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Delete duplicate rows, keeping one per (category_id, item_id) -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name='category_item_mapping' AND column_name='id'
+                ) THEN
+                    DELETE FROM category_item_mapping t
+                    USING category_item_mapping d
+                    WHERE t.category_id = d.category_id
+                      AND t.item_id = d.item_id
+                      AND t.ctid &gt; d.ctid;
+                ELSE
+                    -- Even without surrogate id, use ctid to keep one
+                    DELETE FROM category_item_mapping t
+                    USING category_item_mapping d
+                    WHERE t.category_id = d.category_id
+                      AND t.item_id = d.item_id
+                      AND t.ctid &gt; d.ctid;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Drop existing PK, then add surrogate UUID id PK -->
+        <sql splitStatements="false">
+            DO $$
+            DECLARE pk_name text;
+            BEGIN
+                SELECT tc.constraint_name INTO pk_name
+                FROM information_schema.table_constraints tc
+                WHERE tc.table_schema='public' AND tc.table_name='category_item_mapping' AND tc.constraint_type='PRIMARY KEY'
+                LIMIT 1;
+                IF pk_name IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE public.category_item_mapping DROP CONSTRAINT %I', pk_name);
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Add id column if missing, backfill, set PK -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='category_item_mapping' AND column_name='id'
+                ) THEN
+                    ALTER TABLE public.category_item_mapping ADD COLUMN id UUID;
+                END IF;
+            END;
+            $$;
+        </sql>
+        <sql>
+            UPDATE category_item_mapping SET id = gen_random_uuid() WHERE id IS NULL;
+        </sql>
+        <sql>
+            ALTER TABLE public.category_item_mapping ALTER COLUMN id SET NOT NULL;
+        </sql>
+        <addPrimaryKey tableName="category_item_mapping" columnNames="id" constraintName="pk_category_item_mapping"/>
+
+        <!-- Enforce logical uniqueness on (category_id, item_id) -->
+        <addUniqueConstraint tableName="category_item_mapping" columnNames="category_id, item_id" constraintName="uk_category_item_pair"/>
+
+        <!-- Keep id column as the single primary key -->
+
+        <!-- Ensure foreign keys exist -->
+        <addForeignKeyConstraint baseTableName="category_item_mapping"
+                                 baseColumnNames="category_id"
+                                 referencedTableName="category"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_category_item_mapping_category"/>
+
+        <addForeignKeyConstraint baseTableName="category_item_mapping"
+                                 baseColumnNames="item_id"
+                                 referencedTableName="item"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_category_item_mapping_item"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+

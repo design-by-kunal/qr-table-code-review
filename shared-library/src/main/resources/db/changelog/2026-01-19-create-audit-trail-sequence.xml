@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="2026-01-19-create-audit-trail-sequence" author="system">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="audit_trail_seq"/>
+            </not>
+        </preConditions>
+        
+        <comment>
+            Create sequence for audit_trail log_number generation to prevent race conditions.
+            This sequence will be used to generate unique sequential log numbers (REQ00001, REQ00002, etc.)
+            in a thread-safe manner, fixing the duplicate key violation issue.
+        </comment>
+        
+        <!-- Create the sequence and set it to the correct starting value -->
+        <sql>
+            -- Create the sequence starting at 1
+            CREATE SEQUENCE IF NOT EXISTS audit_trail_seq START WITH 1;
+            
+            -- Set the sequence to the next available value based on existing data
+            -- Use GREATEST(1, ...) to ensure we never try to set sequence to 0 (which is invalid)
+            SELECT setval('audit_trail_seq', 
+                GREATEST(1,
+                    COALESCE(
+                        (SELECT MAX(
+                            CASE 
+                                WHEN log_number ~ '^REQ[0-9]+$' 
+                                THEN CAST(SUBSTRING(log_number FROM 4) AS BIGINT)
+                                ELSE 0
+                            END
+                        ) FROM audit_trail), 
+                        0
+                    )
+                ), 
+                true
+            );
+        </sql>
+        
+        <rollback>
+            <sql>DROP SEQUENCE IF EXISTS audit_trail_seq;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Safe v2 changeset for dashboard reset times on restaurant -->
+    <changeSet id="2026-01-28-add-dashboard-reset-times-safe" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant"/>
+                <or>
+                    <not>
+                        <columnExists tableName="restaurant" columnName="kds_live_dashboard_reset_time"/>
+                    </not>
+                    <not>
+                        <columnExists tableName="restaurant" columnName="cashier_live_dashboard_reset_time"/>
+                    </not>
+                </or>
+            </and>
+        </preConditions>
+
+        <!-- Re-add columns if missing -->
+        <addColumn tableName="restaurant">
+            <column name="kds_live_dashboard_reset_time" type="TIMETZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="restaurant">
+            <column name="cashier_live_dashboard_reset_time" type="TIMETZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Populate existing records with default time 03:00:00 UTC (idempotent WHERE) -->
+        <sql>
+            UPDATE restaurant
+            SET kds_live_dashboard_reset_time = '03:00:00+00'::timetz,
+                cashier_live_dashboard_reset_time = '03:00:00+00'::timetz
+            WHERE kds_live_dashboard_reset_time IS NULL
+               OR cashier_live_dashboard_reset_time IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

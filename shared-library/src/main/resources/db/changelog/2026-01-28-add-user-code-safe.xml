@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Safe v2 changesets around user_code / employee_code on users -->
+
+    <!-- Step 1 (safe): add user_code only if users table exists and column is missing -->
+    <changeSet id="2026-01-28-add-user-code-column-safe" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <not>
+                    <columnExists tableName="users" columnName="user_code"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="users">
+            <column name="user_code" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 2 (safe): populate user_code only when there are NULLs -->
+    <changeSet id="2026-01-28-populate-user-code-safe" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <columnExists tableName="users" columnName="user_code"/>
+                <sqlCheck expectedResult="1">
+                    SELECT CASE WHEN EXISTS (
+                        SELECT 1 FROM users WHERE user_code IS NULL
+                    ) THEN 1 ELSE 0 END
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <sql>
+            UPDATE users
+            SET user_code = UPPER(SUBSTRING(md5(random()::text), 1, 6))
+            WHERE user_code IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Step 3 (safe): drop employee_code only if table and column exist -->
+    <changeSet id="2026-01-28-drop-employee-code-safe" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <columnExists tableName="users" columnName="employee_code"/>
+            </and>
+        </preConditions>
+
+        <dropColumn tableName="users" columnName="employee_code"/>
+    </changeSet>
+
+</databaseChangeLog>
+

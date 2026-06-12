@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="2025-10-04-fix-combo-datetime-timestamptz" author="system">
+        <comment>Fix combo table datetime columns to TIMESTAMPTZ for UTC support</comment>
+        
+        <!-- Update combo table valid_from column to TIMESTAMPTZ -->
+        <modifyDataType tableName="combo" columnName="valid_from" newDataType="TIMESTAMPTZ"/>
+        
+        <!-- Update combo table valid_to column to TIMESTAMPTZ -->
+        <modifyDataType tableName="combo" columnName="valid_to" newDataType="TIMESTAMPTZ"/>
+        
+        <!-- Update combo table start_time column to TIMESTAMPTZ -->
+        <sql>ALTER TABLE combo ALTER COLUMN start_time TYPE TIMESTAMPTZ USING (CURRENT_DATE + start_time) AT TIME ZONE 'UTC'</sql>
+        
+        <!-- Update combo table end_time column to TIMESTAMPTZ -->
+        <sql>ALTER TABLE combo ALTER COLUMN end_time TYPE TIMESTAMPTZ USING (CURRENT_DATE + end_time) AT TIME ZONE 'UTC'</sql>
+        
+        <rollback>
+            <!-- Rollback: Convert combo table back to original types -->
+            <modifyDataType tableName="combo" columnName="valid_from" newDataType="TIMESTAMP"/>
+            <modifyDataType tableName="combo" columnName="valid_to" newDataType="TIMESTAMP"/>
+            <sql>ALTER TABLE combo ALTER COLUMN start_time TYPE TIME USING (start_time::TIME)</sql>
+            <sql>ALTER TABLE combo ALTER COLUMN end_time TYPE TIME USING (end_time::TIME)</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

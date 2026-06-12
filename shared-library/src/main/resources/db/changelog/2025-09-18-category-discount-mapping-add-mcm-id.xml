@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-category-discount-mapping-add-mcm-id" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="category_discount_mapping"/>
+            <not>
+                <columnExists tableName="category_discount_mapping" columnName="menu_category_mapping_id"/>
+            </not>
+        </preConditions>
+
+        <comment>
+            Add menu_category_mapping_id to category_discount_mapping, backfill from existing category_id by joining menu_category_mapping on category_id for active menu assignments, and add FK.
+        </comment>
+
+        <!-- Add new nullable column if missing -->
+        <addColumn tableName="category_discount_mapping">
+            <column name="menu_category_mapping_id" type="UUID"/>
+        </addColumn>
+
+        <!-- Backfill: choose one menu_category_mapping per category (if multiple menus exist, pick latest by id as tie-breaker) -->
+        <sql>
+            UPDATE category_discount_mapping cdm
+            SET menu_category_mapping_id = sub.mcm_id
+            FROM (
+                SELECT DISTINCT ON (mcm.category_id)
+                    mcm.category_id,
+                    mcm.id AS mcm_id
+                FROM menu_category_mapping mcm
+                ORDER BY mcm.category_id, mcm.id DESC
+            ) sub
+            WHERE cdm.category_id = sub.category_id
+              AND cdm.menu_category_mapping_id IS NULL;
+        </sql>
+
+        <!-- Make column not null once backfilled (if any missing, leave nullable to avoid failure) -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM category_discount_mapping WHERE menu_category_mapping_id IS NULL
+                ) THEN
+                    EXECUTE 'ALTER TABLE public.category_discount_mapping ALTER COLUMN menu_category_mapping_id SET NOT NULL';
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Add FK -->
+        <addForeignKeyConstraint baseTableName="category_discount_mapping"
+                                 baseColumnNames="menu_category_mapping_id"
+                                 referencedTableName="menu_category_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_cdm_menu_category_mapping"/>
+
+        <!-- Optional: keep old category_id for now to avoid breaking reads; drop later when code is updated -->
+
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add discount_code column -->
+    <changeSet id="20250905-1-add-discount-code" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="discount" columnName="discount_code"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="discount">
+            <column name="discount_code" type="varchar(150)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add BOGO related columns -->
+    <changeSet id="20250905-2-add-bogo-columns" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <and>
+                    <columnExists tableName="discount" columnName="buy_quantity"/>
+                    <columnExists tableName="discount" columnName="get_quantity"/>
+                </and>
+            </not>
+        </preConditions>
+        <addColumn tableName="discount">
+            <column name="buy_quantity" type="INTEGER"/>
+            <column name="get_quantity" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add max_discount_value column -->
+    <changeSet id="20250905-3-add-max-discount-value" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="discount" columnName="max_discount_value"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="discount">
+            <column name="max_discount_value" type="DECIMAL(10,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add usage tracking columns -->
+    <changeSet id="20250905-4-add-usage-columns" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <and>
+                    <columnExists tableName="discount" columnName="max_uses"/>
+                    <columnExists tableName="discount" columnName="current_usage"/>
+                </and>
+            </not>
+        </preConditions>
+        <addColumn tableName="discount">
+            <column name="max_uses" type="INTEGER"/>
+            <column name="current_usage" type="INTEGER" defaultValue="0">
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog> 

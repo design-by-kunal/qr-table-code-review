@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-03-convert-shift-time-to-timetz" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="shift"/>
+                <columnExists tableName="shift" columnName="start_time"/>
+                <columnExists tableName="shift" columnName="end_time"/>
+                <!-- Skip if columns are already timetz -->
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM information_schema.columns
+                    WHERE table_schema = 'public'
+                    AND table_name = 'shift'
+                    AND column_name IN ('start_time', 'end_time')
+                    AND (udt_name = 'timetz' OR data_type = 'time with time zone')
+                </sqlCheck>
+            </and>
+        </preConditions>
+
+        <comment>Update shift table to support timezone-aware scheduling for UTC implementation. Convert start_time and end_time from TIME WITHOUT TIME ZONE to TIMETZ (UTC).</comment>
+
+        <!-- Convert start_time from TIME WITHOUT TIME ZONE to TIMETZ (UTC) -->
+        <sql>
+            ALTER TABLE shift
+            ALTER COLUMN start_time TYPE timetz USING (to_char(start_time::time, 'HH24:MI:SS') || '+00')::timetz;
+        </sql>
+
+        <!-- Convert end_time from TIME WITHOUT TIME ZONE to TIMETZ (UTC) -->
+        <sql>
+            ALTER TABLE shift
+            ALTER COLUMN end_time TYPE timetz USING (to_char(end_time::time, 'HH24:MI:SS') || '+00')::timetz;
+        </sql>
+
+        <!-- Add comments for documentation -->
+        <sql>
+            COMMENT ON COLUMN shift.start_time IS 'Shift start time in UTC (format: HH:MM:SS+00)';
+            COMMENT ON COLUMN shift.end_time IS 'Shift end time in UTC (format: HH:MM:SS+00)';
+        </sql>
+
+        <rollback>
+            <!-- Rollback: Convert back to TIME WITHOUT TIME ZONE -->
+            <sql>
+                ALTER TABLE shift
+                ALTER COLUMN start_time TYPE time USING start_time::time,
+                ALTER COLUMN end_time TYPE time USING end_time::time;
+            </sql>
+            
+            <!-- Remove comments -->
+            <sql>
+                COMMENT ON COLUMN shift.start_time IS NULL;
+                COMMENT ON COLUMN shift.end_time IS NULL;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

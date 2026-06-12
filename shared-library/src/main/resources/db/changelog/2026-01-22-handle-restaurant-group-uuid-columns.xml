@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Handle case where restaurant_group columns are already UUID (skip the problematic migration) -->
+    <changeSet id="2026-01-22-handle-restaurant-group-uuid-columns" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group"/>
+                <columnExists tableName="restaurant_group" columnName="created_by"/>
+                <columnExists tableName="restaurant_group" columnName="updated_by"/>
+                <!-- Only run if columns are already UUID -->
+                <sqlCheck expectedResult="2">
+                    SELECT COUNT(*) FROM information_schema.columns 
+                    WHERE table_name = 'restaurant_group' 
+                    AND column_name IN ('created_by', 'updated_by')
+                    AND udt_name = 'uuid'
+                </sqlCheck>
+                <!-- Only run if foreign keys don't exist yet -->
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*) FROM information_schema.table_constraints 
+                    WHERE constraint_name = 'fk_restaurant_group_created_by'
+                    AND table_name = 'restaurant_group'
+                </sqlCheck>
+                <!-- Only run if the problematic migration hasn't been executed yet -->
+                <not>
+                    <changeSetExecuted id="2025-08-05-01" author="system" changeLogFile="db/changelog/2025-08-05-update-restaurant-group-user-fields.xml"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Add foreign key constraints when restaurant_group columns are already UUID (handles case where migration 2025-08-05-01 would fail)</comment>
+
+        <addForeignKeyConstraint baseTableName="restaurant_group" 
+                                baseColumnNames="created_by" 
+                                referencedTableName="users" 
+                                referencedColumnNames="id" 
+                                constraintName="fk_restaurant_group_created_by"/>
+
+        <addForeignKeyConstraint baseTableName="restaurant_group" 
+                                baseColumnNames="updated_by" 
+                                referencedTableName="users" 
+                                referencedColumnNames="id" 
+                                constraintName="fk_restaurant_group_updated_by"/>
+    </changeSet>
+
+</databaseChangeLog>

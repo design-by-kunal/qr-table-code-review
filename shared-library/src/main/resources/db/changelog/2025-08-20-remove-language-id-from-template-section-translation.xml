@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-08-20-remove-language-id-from-template-section-translation" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="template_section_translation"/>
+            <columnExists tableName="template_section_translation" columnName="language_id"/>
+        </preConditions>
+        <dropColumn tableName="template_section_translation" columnName="language_id"/>
+    </changeSet>
+
+</databaseChangeLog>

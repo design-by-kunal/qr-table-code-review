@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+<changeSet id="20250807-drop-fk-sql" author="nitesh">
+<comment>Drop foreign key on language_id in menu_structure_translation</comment>
+<sql>
+ALTER TABLE menu_structure_translation 
+DROP CONSTRAINT IF EXISTS fk60btx9im93qaogj48ysn017re;
+</sql>
+</changeSet>
+
+<changeSet id="20250807-drop-language-id-sql" author="nitesh">
+<comment>Drop language_id column after removing FK</comment>
+<sql>
+ALTER TABLE menu_structure_translation 
+DROP COLUMN IF EXISTS language_id;
+</sql>
+</changeSet>
+</databaseChangeLog> 

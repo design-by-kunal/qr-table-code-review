@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-18-menu-category-mapping-pk-v2" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="menu_category_mapping"/>
+        </preConditions>
+
+        <comment>
+            Switch to surrogate UUID primary key (id) for menu_category_mapping and enforce unique(menu_id, category_id).
+        </comment>
+
+        <!-- Ensure pgcrypto exists for gen_random_uuid() -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pgcrypto') THEN
+                    CREATE EXTENSION pgcrypto;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Deduplicate rows before adding unique constraint -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                DELETE FROM menu_category_mapping t
+                USING menu_category_mapping d
+                WHERE t.menu_id = d.menu_id
+                  AND t.category_id = d.category_id
+                  AND t.ctid > d.ctid;
+            END;
+            $$;
+        </sql>
+
+        <!-- Add id column if missing -->
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='menu_category_mapping' AND column_name='id'
+                ) THEN
+                    ALTER TABLE public.menu_category_mapping ADD COLUMN id UUID;
+                END IF;
+            END;
+            $$;
+        </sql>
+
+        <!-- Backfill and set PK on id -->
+        <sql>
+            UPDATE menu_category_mapping SET id = gen_random_uuid() WHERE id IS NULL;
+        </sql>
+        <sql>
+            ALTER TABLE public.menu_category_mapping ALTER COLUMN id SET NOT NULL;
+        </sql>
+
+        <!-- Drop existing PK if any, then add new PK on id -->
+        <sql splitStatements="false">
+            DO $$
+            DECLARE pk_name text;
+            BEGIN
+                SELECT tc.constraint_name INTO pk_name
+                FROM information_schema.table_constraints tc
+                WHERE tc.table_schema='public' AND tc.table_name='menu_category_mapping' AND tc.constraint_type='PRIMARY KEY'
+                LIMIT 1;
+                IF pk_name IS NOT NULL THEN
+                    EXECUTE format('ALTER TABLE public.menu_category_mapping DROP CONSTRAINT %I', pk_name);
+                END IF;
+            END;
+            $$;
+        </sql>
+        <addPrimaryKey tableName="menu_category_mapping" columnNames="id" constraintName="pk_menu_category_mapping_v2"/>
+
+        <!-- Enforce logical uniqueness on pair -->
+        <addUniqueConstraint tableName="menu_category_mapping" columnNames="menu_id, category_id" constraintName="uk_menu_category_pair_v2"/>
+
+        <!-- Ensure FKs exist -->
+        <addForeignKeyConstraint baseTableName="menu_category_mapping"
+                                 baseColumnNames="menu_id"
+                                 referencedTableName="menu"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_menu_category_mapping_menu_v2"/>
+
+        <addForeignKeyConstraint baseTableName="menu_category_mapping"
+                                 baseColumnNames="category_id"
+                                 referencedTableName="category"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_menu_category_mapping_category_v2"/>
+
+    </changeSet>
+
+</databaseChangeLog>
+

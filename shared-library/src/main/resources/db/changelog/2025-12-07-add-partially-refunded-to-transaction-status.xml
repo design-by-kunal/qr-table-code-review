@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-12-07-add-partially-refunded-to-transaction-status" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="transaction"/>
+        </preConditions>
+        <comment>Update transaction_transaction_status_check constraint to allow PARTIALLY_REFUNDED status</comment>
+        <sql>
+            -- Drop the old constraint first so updates can succeed
+            ALTER TABLE transaction DROP CONSTRAINT IF EXISTS transaction_transaction_status_check;
+        </sql>
+        <sql>
+            -- Create new constraint with PARTIALLY_REFUNDED included
+            ALTER TABLE transaction 
+            ADD CONSTRAINT transaction_transaction_status_check 
+            CHECK (transaction_status::text = ANY (ARRAY['OPEN'::character varying::text, 'PENDING'::character varying::text, 'COMPLETED'::character varying::text, 'REFUNDED'::character varying::text, 'PARTIALLY_REFUNDED'::character varying::text, 'CANCELED'::character varying::text]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

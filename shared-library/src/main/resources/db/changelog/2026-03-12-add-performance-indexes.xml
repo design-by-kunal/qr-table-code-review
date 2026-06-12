@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Performance optimization indexes based on pg_stat_statements analysis and high-load stress testing -->
+    <!-- These indexes improve query performance for frequently executed queries in the restaurant management system -->
+
+    <!-- table_assignment indexes -->
+    
+    <!-- Index for querying active table assignments by restaurant_table_id -->
+    <!-- Optimizes queries that find active assignments for a specific table -->
+    <changeSet id="2026-03-12-1-add-table-assignment-restaurant-table-id-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="table_assignment"/>
+        </preConditions>
+        <comment>Add partial index on table_assignment.restaurant_table_id for active assignments (unassigned_at IS NULL)</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_table_assignment_restaurant_table_id 
+            ON table_assignment(restaurant_table_id) 
+            WHERE unassigned_at IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Index for querying active table assignments by waiter_id -->
+    <!-- Optimizes queries that find all active assignments for a specific waiter -->
+    <changeSet id="2026-03-12-2-add-table-assignment-waiter-id-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="table_assignment"/>
+        </preConditions>
+        <comment>Add partial index on table_assignment.waiter_id for active assignments (unassigned_at IS NULL)</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_table_assignment_waiter_id 
+            ON table_assignment(waiter_id) 
+            WHERE unassigned_at IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Composite index for querying active assignments by waiter and table combination -->
+    <!-- Optimizes queries that check if a specific waiter is assigned to a specific table -->
+    <changeSet id="2026-03-12-3-add-table-assignment-waiter-table-composite-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="table_assignment"/>
+        </preConditions>
+        <comment>Add composite partial index on table_assignment(waiter_id, restaurant_table_id) for active assignments</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_table_assignment_waiter_id_restaurant_table_id 
+            ON table_assignment(waiter_id, restaurant_table_id) 
+            WHERE unassigned_at IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- restaurant_item_availability indexes -->
+    
+    <!-- Composite index for querying item availability by restaurant and category item mapping -->
+    <!-- Optimizes queries that check item availability for a specific restaurant and item combination -->
+    <changeSet id="2026-03-12-4-add-restaurant-item-availability-composite-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_item_availability"/>
+        </preConditions>
+        <comment>Add composite index on restaurant_item_availability(restaurant_id, category_item_mapping_id) for availability lookups</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_restaurant_item_availability_restaurant_id_category_item_mapping_id
+            ON public.restaurant_item_availability(restaurant_id, category_item_mapping_id);
+        </sql>
+    </changeSet>
+
+    <!-- sessions indexes -->
+    
+    <!-- Index for querying active sessions by table_id -->
+    <!-- Optimizes queries that find active sessions for a specific table -->
+    <changeSet id="2026-03-12-5-add-sessions-table-id-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+        </preConditions>
+        <comment>Add partial index on sessions.table_id for active sessions (expired_at IS NULL)</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_sessions_table_id 
+            ON sessions(table_id) 
+            WHERE expired_at IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- Composite index for querying active sessions by table_id ordered by sequence_no descending -->
+    <!-- Optimizes queries that retrieve the latest active session for a table -->
+    <changeSet id="2026-03-12-6-add-sessions-table-id-sequence-desc-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+        </preConditions>
+        <comment>Add composite partial index on sessions(table_id, sequence_no DESC) for active sessions to optimize latest session queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_sessions_table_id_sequence_no_desc 
+            ON sessions(table_id, sequence_no DESC) 
+            WHERE expired_at IS NULL;
+        </sql>
+    </changeSet>
+
+    <!-- ordered_item indexes -->
+    
+    <!-- Index for querying ordered items by order_id -->
+    <!-- Optimizes queries that retrieve all items for a specific order -->
+    <changeSet id="2026-03-12-7-add-ordered-item-order-id-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_item"/>
+        </preConditions>
+        <comment>Add index on ordered_item.order_id to optimize order item retrieval queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_ordered_item_order_id
+            ON public.ordered_item(order_id);
+        </sql>
+    </changeSet>
+
+    <!-- ordered_combo indexes -->
+    
+    <!-- Index for querying ordered combos by order_id -->
+    <!-- Optimizes queries that retrieve all combos for a specific order -->
+    <changeSet id="2026-03-12-8-add-ordered-combo-order-id-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="ordered_combo"/>
+        </preConditions>
+        <comment>Add index on ordered_combo.order_id to optimize order combo retrieval queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_ordered_combo_order_id
+            ON public.ordered_combo(order_id);
+        </sql>
+    </changeSet>
+
+    <!-- orders indexes -->
+    
+    <!-- Composite index for querying orders by restaurant_id ordered by created_at descending -->
+    <!-- Optimizes queries that retrieve recent orders for a restaurant (e.g., order history, dashboard) -->
+    <changeSet id="2026-03-12-9-add-orders-restaurant-id-created-at-desc-index" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+        </preConditions>
+        <comment>Add composite index on orders(restaurant_id, created_at DESC) to optimize restaurant order history queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_orders_restaurant_id_created_at_desc 
+            ON orders(restaurant_id, created_at DESC);
+        </sql>
+    </changeSet>
+
+    <!-- Index for querying orders by session_id -->
+    <!-- Optimizes queries that retrieve all orders for a specific session -->
+    <changeSet id="2026-03-12-10-add-orders-session-id-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="orders"/>
+        </preConditions>
+        <comment>Add index on orders.session_id to optimize session order retrieval queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_orders_session_id
+            ON public.orders(session_id);
+        </sql>
+    </changeSet>
+
+    <!-- transaction indexes -->
+    
+    <!-- Index for querying transactions by order_id -->
+    <!-- Optimizes queries that retrieve transaction information for a specific order -->
+    <changeSet id="2026-03-12-11-add-transaction-order-id-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="transaction"/>
+        </preConditions>
+        <comment>Add index on transaction.order_id to optimize order transaction lookup queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_transaction_order_id
+            ON public.transaction(order_id);
+        </sql>
+    </changeSet>
+
+    <!-- login_audit indexes -->
+    
+    <!-- Index for querying login audit records by user_id -->
+    <!-- Optimizes queries that retrieve login history for a specific user -->
+    <changeSet id="2026-03-12-12-add-login-audit-user-id-index" author="josh">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="login_audit"/>
+        </preConditions>
+        <comment>Add index on login_audit.user_id to optimize user login history queries</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_login_audit_user_id
+            ON public.login_audit(user_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

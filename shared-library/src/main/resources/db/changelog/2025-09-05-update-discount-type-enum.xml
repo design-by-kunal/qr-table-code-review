@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop old constraint -->
+    <changeSet id="20250905-1-drop-old-constraint" author="shivani">
+        <sql>
+            ALTER TABLE discount DROP CONSTRAINT IF EXISTS discount_discount_type_check;
+        </sql>
+    </changeSet>
+
+    <!-- Update existing AMOUNT values to FLAT -->
+    <changeSet id="20250905-2-update-discount-type-enum" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM discount WHERE discount_type = 'AMOUNT'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE discount SET discount_type = 'FLAT' WHERE discount_type = 'AMOUNT';
+        </sql>
+    </changeSet>
+
+    <!-- Add check constraint for new enum values -->
+    <changeSet id="20250905-3-add-discount-type-constraint" author="shivani">
+        <sql>
+            ALTER TABLE discount DROP CONSTRAINT IF EXISTS discount_type_check;
+            ALTER TABLE discount ADD CONSTRAINT discount_type_check 
+            CHECK (discount_type::text = ANY (ARRAY['PERCENT'::character varying, 'FLAT'::character varying, 'BXGY'::character varying, 'HAPPY_HOUR'::character varying]::text[]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog> 

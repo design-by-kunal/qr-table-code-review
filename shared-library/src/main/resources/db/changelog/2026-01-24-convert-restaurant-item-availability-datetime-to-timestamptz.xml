@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert restaurant_item_availability datetime columns to TIMESTAMPTZ for UTC support and unambiguous timezone handling -->
+
+    <changeSet id="2026-01-24-1-restaurant-item-availability-created-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_item_availability"/>
+            <columnExists tableName="restaurant_item_availability" columnName="created_at"/>
+        </preConditions>
+        <comment>Convert restaurant_item_availability.created_at from TIMESTAMP WITHOUT TIME ZONE to TIMESTAMPTZ, interpreting existing values as UTC.</comment>
+        <sql>
+            ALTER TABLE restaurant_item_availability
+                ALTER COLUMN created_at TYPE timestamptz
+                USING created_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-01-24-2-restaurant-item-availability-updated-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="restaurant_item_availability"/>
+            <columnExists tableName="restaurant_item_availability" columnName="updated_at"/>
+        </preConditions>
+        <comment>Convert restaurant_item_availability.updated_at from TIMESTAMP WITHOUT TIME ZONE to TIMESTAMPTZ, interpreting existing values as UTC.</comment>
+        <sql>
+            ALTER TABLE restaurant_item_availability
+                ALTER COLUMN updated_at TYPE timestamptz
+                USING updated_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

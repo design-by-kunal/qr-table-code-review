@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="cleanup-duplicate-data" author="josh">
+        <comment>Clean up duplicate data to allow unique constraints to be created</comment>
+        
+        <!-- Drop existing constraints/indexes that are causing issues -->
+        <sql>
+            DROP INDEX IF EXISTS uk_restaurant_group_code_case_insensitive;
+        </sql>
+        
+        <sql>
+            ALTER TABLE restaurant_group_translation DROP CONSTRAINT IF EXISTS uk_restaurant_group_translation_name_case_insensitive;
+        </sql>
+        
+        <sql>
+            DROP INDEX IF EXISTS uk_restaurant_group_translation_name_case_insensitive;
+        </sql>
+        
+        <!-- Clean up duplicate restaurant group codes (keep the first one, delete others) -->
+        <sql>
+            DELETE FROM restaurant_group 
+            WHERE id NOT IN (
+                SELECT DISTINCT ON (LOWER(restaurant_group_code)) id 
+                FROM restaurant_group 
+                WHERE restaurant_group_code IS NOT NULL 
+                ORDER BY LOWER(restaurant_group_code), id
+            ) 
+            AND restaurant_group_code IS NOT NULL;
+        </sql>
+        
+        <!-- Clean up duplicate restaurant group translation names (keep the first one, delete others) -->
+        <sql>
+            DELETE FROM restaurant_group_translation 
+            WHERE id NOT IN (
+                SELECT DISTINCT ON (LOWER(name), restaurant_group_id) id 
+                FROM restaurant_group_translation 
+                WHERE name IS NOT NULL 
+                ORDER BY LOWER(name), restaurant_group_id, id
+            ) 
+            AND name IS NOT NULL;
+        </sql>
+        
+        <!-- Recreate the unique constraints after cleanup -->
+        <sql>
+            CREATE UNIQUE INDEX uk_restaurant_group_code_case_insensitive 
+            ON restaurant_group (LOWER(restaurant_group_code)) 
+            WHERE is_deleted = false;
+        </sql>
+        
+        <sql>
+            CREATE UNIQUE INDEX uk_restaurant_group_translation_name_case_insensitive 
+            ON restaurant_group_translation (LOWER(name), restaurant_group_id);
+        </sql>
+        
+    </changeSet>
+
+</databaseChangeLog>

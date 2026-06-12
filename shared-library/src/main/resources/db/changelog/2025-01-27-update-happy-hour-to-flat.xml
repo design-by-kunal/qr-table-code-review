@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Update all HAPPY_HOUR discount types to FLAT -->
+    <changeSet id="20250912-1-update-happy-hour-to-flat" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="true">
+                <![CDATA[
+                SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
+                FROM discount 
+                WHERE discount_type = 'HAPPY_HOUR'
+                ]]>
+            </sqlCheck>
+        </preConditions>
+
+        <sql>
+            <![CDATA[
+            UPDATE discount 
+            SET discount_type = 'FLAT' 
+            WHERE discount_type = 'HAPPY_HOUR';
+            ]]>
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

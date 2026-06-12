@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-02-17-add-alcoholic-tax-refund-amount" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="refund"/>
+                <not>
+                    <columnExists tableName="refund" columnName="alcoholic_tax_refund_amount"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Add alcoholic_tax_refund_amount column to refund table for tax breakdown.
+        </comment>
+
+        <addColumn tableName="refund">
+            <column name="alcoholic_tax_refund_amount" type="NUMERIC(10,2)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-02-17-add-non-alcoholic-tax-refund-amount" author="system">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="refund"/>
+                <not>
+                    <columnExists tableName="refund" columnName="non_alcoholic_tax_refund_amount"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>
+            Add non_alcoholic_tax_refund_amount column to refund table for tax breakdown.
+        </comment>
+
+        <addColumn tableName="refund">
+            <column name="non_alcoholic_tax_refund_amount" type="NUMERIC(10,2)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

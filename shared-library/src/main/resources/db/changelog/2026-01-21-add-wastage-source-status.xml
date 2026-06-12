@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="add-wastage-source-status-to-ordered-item" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ordered_item" columnName="wastage_source_status"/>
+            </not>
+        </preConditions>
+        
+        <comment>Add wastage_source_status column to ordered_item to track item status at cancellation time for wastage reporting.</comment>
+        
+        <addColumn tableName="ordered_item">
+            <column name="wastage_source_status" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+    </changeSet>
+
+    <changeSet id="add-wastage-source-status-to-ordered-combo" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ordered_combo" columnName="wastage_source_status"/>
+            </not>
+        </preConditions>
+        
+        <comment>Add wastage_source_status column to ordered_combo to track combo status at cancellation time for wastage reporting.</comment>
+        
+        <addColumn tableName="ordered_combo">
+            <column name="wastage_source_status" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+    </changeSet>
+
+    <changeSet id="add-indexes-for-wastage-source-status" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_ordered_item_wastage_source_status"/>
+            </not>
+        </preConditions>
+        
+        <comment>Add indexes on wastage_source_status columns for better query performance in wastage reports.</comment>
+        
+        <createIndex tableName="ordered_item" indexName="idx_ordered_item_wastage_source_status">
+            <column name="wastage_source_status"/>
+        </createIndex>
+        
+        <createIndex tableName="ordered_combo" indexName="idx_ordered_combo_wastage_source_status">
+            <column name="wastage_source_status"/>
+        </createIndex>
+        
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add restaurant_group_code to restaurant_group table -->
+    <changeSet id="2025-07-30-add-restaurant-group-code" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group"/>
+                <not>
+                    <columnExists tableName="restaurant_group" columnName="restaurant_group_code"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn tableName="restaurant_group">
+            <column name="restaurant_group_code" type="VARCHAR(50)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- Add restaurant_code to restaurant table -->
+    <changeSet id="2025-07-30-add-restaurant-code" author="josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant"/>
+                <not>
+                    <columnExists tableName="restaurant" columnName="restaurant_code"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn tableName="restaurant">
+            <column name="restaurant_code" type="VARCHAR(50)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog> 

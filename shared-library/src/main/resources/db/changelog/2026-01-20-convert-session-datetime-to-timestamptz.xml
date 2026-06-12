@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Convert sessions datetime columns to TIMESTAMPTZ for UTC support and consistency with orders table -->
+    
+    <!-- Convert sessions.issued_at to TIMESTAMPTZ -->
+    <changeSet id="2026-01-20-1-sessions-issued-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+            <columnExists tableName="sessions" columnName="issued_at"/>
+        </preConditions>
+        <comment>Convert sessions.issued_at from TIMESTAMP to TIMESTAMPTZ for OffsetDateTime support. This ensures consistency with orders.created_at and fixes timezone issues in KDS dashboard queries where session.issued_at is compared with reset times.</comment>
+        
+        <sql>
+            ALTER TABLE sessions
+                ALTER COLUMN issued_at TYPE timestamptz
+                USING issued_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+    <!-- Convert sessions.expired_at to TIMESTAMPTZ -->
+    <changeSet id="2026-01-20-2-sessions-expired-at-timestamptz" author="system">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="sessions"/>
+            <columnExists tableName="sessions" columnName="expired_at"/>
+        </preConditions>
+        <comment>Convert sessions.expired_at from TIMESTAMP to TIMESTAMPTZ for OffsetDateTime support and timezone consistency</comment>
+        
+        <sql>
+            ALTER TABLE sessions
+                ALTER COLUMN expired_at TYPE timestamptz
+                USING expired_at AT TIME ZONE 'UTC';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-10-06-combo-start-end-to-timetz" author="josh">
+        <!-- Allow previously stored checksum so already-deployed DBs don't error after this fix -->
+        <validCheckSum>9:0e8ff7cb0287d0a7f056821f53372d5a</validCheckSum>
+
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="combo"/>
+            <columnExists tableName="combo" columnName="start_time"/>
+            <columnExists tableName="combo" columnName="end_time"/>
+        </preConditions>
+
+        <!-- Convert TIME/TIMETZ to TIMETZ using a simple cast that works for both types -->
+        <sql>
+            ALTER TABLE combo
+              ALTER COLUMN start_time TYPE timetz USING (start_time::timetz),
+              ALTER COLUMN end_time   TYPE timetz USING (end_time::timetz);
+        </sql>
+
+        <rollback>
+            ALTER TABLE combo
+              ALTER COLUMN start_time TYPE time USING start_time::time,
+              ALTER COLUMN end_time TYPE time USING end_time::time;
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+
+

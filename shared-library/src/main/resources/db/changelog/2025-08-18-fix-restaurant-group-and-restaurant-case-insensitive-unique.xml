@@ -1,0 +1,87 @@
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Step 1: Remove duplicates in restaurant_group_translation -->
+    <changeSet id="clean-duplicates-restaurant-group-translation" author="shivani">
+        <sql>
+            -- Delete duplicate records, keeping the one with the lowest ID
+            WITH ranked AS (
+                SELECT id,
+                       restaurant_group_id,
+                       name,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY restaurant_group_id, name
+                           ORDER BY id
+                       ) AS rn
+                FROM restaurant_group_translation
+            )
+            DELETE FROM restaurant_group_translation
+            WHERE id IN (
+                SELECT id FROM ranked WHERE rn > 1
+            );
+        </sql>
+    </changeSet>
+
+    <!-- Step 2: Remove duplicates in restaurant_translation -->
+    <changeSet id="clean-duplicates-restaurant-translation" author="shivani">
+        <sql>
+            -- Delete duplicate records, keeping the one with the lowest ID
+            WITH ranked AS (
+                SELECT id,
+                       restaurant_id,
+                       name,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY restaurant_id, name
+                           ORDER BY id
+                       ) AS rn
+                FROM restaurant_translation
+            )
+            DELETE FROM restaurant_translation
+            WHERE id IN (
+                SELECT id FROM ranked WHERE rn > 1
+            );
+        </sql>
+    </changeSet>
+
+    <!-- Step 3: Create case-insensitive unique index for restaurant_group_translation -->
+    <changeSet id="unique-index-restaurant-group-translation" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="uniq_restaurant_group_translation_name_ci"/>
+            </not>
+        </preConditions>
+        <createIndex 
+            indexName="uniq_restaurant_group_translation_name_ci" 
+            tableName="restaurant_group_translation" 
+            unique="true">
+            <column name="restaurant_group_id"/>
+            <column name="name" computed="true">LOWER(name)</column>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="uniq_restaurant_group_translation_name_ci" tableName="restaurant_group_translation"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 4: Create case-insensitive unique index for restaurant_translation -->
+    <changeSet id="unique-index-restaurant-translation" author="shivani">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="uniq_restaurant_translation_name_ci"/>
+            </not>
+        </preConditions>
+        <createIndex 
+            indexName="uniq_restaurant_translation_name_ci" 
+            tableName="restaurant_translation" 
+            unique="true">
+            <column name="restaurant_id"/>
+            <column name="name" computed="true">LOWER(name)</column>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="uniq_restaurant_translation_name_ci" tableName="restaurant_translation"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

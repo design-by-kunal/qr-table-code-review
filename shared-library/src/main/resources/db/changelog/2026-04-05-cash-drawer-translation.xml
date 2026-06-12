@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2026-04-05-create-cash-drawer-translation" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="cash_drawer_translation"/>
+            </not>
+        </preConditions>
+        <createTable tableName="cash_drawer_translation">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="cash_drawer_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language_code" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="cash_drawer_translation"
+                baseColumnNames="cash_drawer_id"
+                constraintName="fk_cash_drawer_translation_drawer"
+                referencedTableName="cash_drawers"
+                referencedColumnNames="id"/>
+        <addUniqueConstraint
+                tableName="cash_drawer_translation"
+                columnNames="cash_drawer_id, language_code"
+                constraintName="uk_cash_drawer_translation_drawer_lang"/>
+    </changeSet>
+
+    <changeSet id="2026-04-05-migrate-cash-drawer-name-to-translation" author="system">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="cash_drawers" columnName="name"/>
+        </preConditions>
+        <sql>
+            INSERT INTO cash_drawer_translation (id, cash_drawer_id, language_code, name)
+            SELECT gen_random_uuid(), id, 'en', name
+            FROM cash_drawers
+            WHERE name IS NOT NULL AND TRIM(name) &lt;&gt; ''
+        </sql>
+        <dropColumn tableName="cash_drawers" columnName="name"/>
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Remove remaining unique constraints on order_number column (v2) -->
+    <!-- This handles the case where the first migration didn't drop all constraints -->
+    <changeSet id="2026-02-07-remove-order-number-unique-constraint-v2" author="system">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM pg_constraint 
+                    WHERE conrelid = 'orders'::regclass 
+                    AND contype = 'u' 
+                    AND (conname = 'uk_orders_order_number' OR conname = 'uknthkiu7pgmnqnu86i2jyoe2v7')
+                </sqlCheck>
+            </or>
+        </preConditions>
+        
+        <comment>
+            Remove any remaining unique constraints on order_number column.
+            This is a follow-up to ensure all constraints are dropped.
+        </comment>
+        
+        <!-- Drop all unique constraints on order_number column -->
+        <sql splitStatements="false">
+            <![CDATA[
+            DO $$
+            DECLARE
+                constraint_record RECORD;
+            BEGIN
+                -- Find and drop ALL unique constraints on order_number column
+                FOR constraint_record IN
+                    SELECT conname
+                    FROM pg_constraint
+                    WHERE conrelid = 'orders'::regclass
+                    AND contype = 'u'
+                    AND EXISTS (
+                        SELECT 1
+                        FROM pg_attribute
+                        WHERE attrelid = conrelid
+                        AND attname = 'order_number'
+                        AND attnum = ANY(conkey)
+                    )
+                LOOP
+                    EXECUTE format('ALTER TABLE orders DROP CONSTRAINT IF EXISTS %I', constraint_record.conname);
+                    RAISE NOTICE 'Dropped unique constraint: %', constraint_record.conname;
+                END LOOP;
+            END $$;
+            ]]>
+        </sql>
+        
+        <!-- Explicitly drop known constraint names as backup -->
+        <sql>
+            ALTER TABLE orders DROP CONSTRAINT IF EXISTS uk_orders_order_number;
+        </sql>
+        <sql>
+            ALTER TABLE orders DROP CONSTRAINT IF EXISTS uknthkiu7pgmnqnu86i2jyoe2v7;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-09-19-fix-foreign-key-constraints" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="item_discount_mapping"/>
+            <tableExists tableName="category_discount_mapping"/>
+            <tableExists tableName="category_item_mapping"/>
+            <tableExists tableName="menu_category_mapping"/>
+            <columnExists tableName="category_item_mapping" columnName="id"/>
+        </preConditions>
+
+        <comment>Clean up orphaned records and recreate foreign key constraints to prevent constraint violations</comment>
+
+        <!-- Drop existing foreign key constraints if they exist -->
+        <sql>
+            ALTER TABLE item_discount_mapping DROP CONSTRAINT IF EXISTS fk_item_discount_mapping_category_item_mapping;
+        </sql>
+
+        <sql>
+            ALTER TABLE item_discount_mapping DROP CONSTRAINT IF EXISTS fk_item_discount_mapping_cim;
+        </sql>
+
+        <sql>
+            ALTER TABLE category_discount_mapping DROP CONSTRAINT IF EXISTS fk_category_discount_mapping_menu_category_mapping;
+        </sql>
+
+        <sql>
+            ALTER TABLE category_discount_mapping DROP CONSTRAINT IF EXISTS fk_cdm_menu_category_mapping;
+        </sql>
+
+        <!-- Clean up any orphaned records in item_discount_mapping -->
+        <sql>
+            DELETE FROM item_discount_mapping 
+            WHERE category_item_mapping_id NOT IN (
+                SELECT id FROM category_item_mapping
+            );
+        </sql>
+
+        <!-- Clean up any orphaned records in category_discount_mapping -->
+        <sql>
+            DELETE FROM category_discount_mapping 
+            WHERE menu_category_mapping_id NOT IN (
+                SELECT id FROM menu_category_mapping
+            );
+        </sql>
+
+        <!-- Recreate foreign key constraints with correct references -->
+        <addForeignKeyConstraint baseTableName="item_discount_mapping"
+                                 baseColumnNames="category_item_mapping_id"
+                                 referencedTableName="category_item_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_item_discount_mapping_category_item_mapping"/>
+
+        <addForeignKeyConstraint baseTableName="category_discount_mapping"
+                                 baseColumnNames="menu_category_mapping_id"
+                                 referencedTableName="menu_category_mapping"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_category_discount_mapping_menu_category_mapping"/>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Speeds up GET /notifications (paginated ids + count) for user + read + sort by created_at -->
+    <changeSet id="2026-05-05-1-notifications-user-read-created-at-id" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="notifications"/>
+                <columnExists tableName="notifications" columnName="user_id"/>
+                <columnExists tableName="notifications" columnName="read"/>
+                <columnExists tableName="notifications" columnName="created_at"/>
+                <columnExists tableName="notifications" columnName="id"/>
+                <not>
+                    <indexExists tableName="notifications" indexName="idx_notifications_user_read_created_at_id"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Composite index for listing notifications by user, read flag, and recency</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created_at_id
+            ON notifications (user_id, read, created_at DESC NULLS LAST, id DESC);
+        </sql>
+    </changeSet>
+
+    <!-- Supports filtered lists: user + read + type IN (...) ORDER BY created_at -->
+    <changeSet id="2026-05-05-2-notifications-user-read-type-created-at-id" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="notifications"/>
+                <columnExists tableName="notifications" columnName="user_id"/>
+                <columnExists tableName="notifications" columnName="read"/>
+                <columnExists tableName="notifications" columnName="type"/>
+                <columnExists tableName="notifications" columnName="created_at"/>
+                <columnExists tableName="notifications" columnName="id"/>
+                <not>
+                    <indexExists tableName="notifications" indexName="idx_notifications_user_read_type_created_at_id"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Composite index for category/type-filtered notification lists</comment>
+        <sql>
+            CREATE INDEX IF NOT EXISTS idx_notifications_user_read_type_created_at_id
+            ON notifications (user_id, read, type, created_at DESC NULLS LAST, id DESC);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

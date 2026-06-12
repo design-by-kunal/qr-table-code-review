@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Remove unique constraint from order_number since order numbers reset daily -->
+    <!-- Order numbers like "D-20" can appear on different days (Feb 6: D-20, Feb 7: D-20, etc.) -->
+    <changeSet id="2026-02-07-remove-order-number-unique-constraint" author="system">
+        <validCheckSum>9:c8e0f9713fbf03ba06a40085c27d0c0b</validCheckSum>
+        <validCheckSum>9:6d45b3253a5b78614070d6eee243f53d</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <indexExists indexName="uk_orders_order_number"/>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM pg_constraint 
+                    WHERE conrelid = 'orders'::regclass 
+                    AND contype = 'u' 
+                    AND conkey::text LIKE '%order_number%'
+                </sqlCheck>
+            </or>
+        </preConditions>
+        
+        <comment>
+            Remove unique constraint from order_number column.
+            Order numbers reset daily, so "D-20" can appear on Feb 6 and also on Feb 7.
+            The order_number is scoped by restaurant, order_type, and effective_date (via order_sequence table).
+            This handles both the named constraint (uk_orders_order_number) and auto-generated constraint names.
+        </comment>
+        
+        <!-- Drop all unique constraints on order_number column -->
+        <!-- There may be multiple constraints (uk_orders_order_number and auto-generated names) -->
+        <sql splitStatements="false">
+            <![CDATA[
+            DO $$
+            DECLARE
+                constraint_record RECORD;
+            BEGIN
+                -- Find and drop ALL unique constraints on order_number column
+                FOR constraint_record IN
+                    SELECT conname
+                    FROM pg_constraint
+                    WHERE conrelid = 'orders'::regclass
+                    AND contype = 'u'
+                    AND EXISTS (
+                        SELECT 1
+                        FROM pg_attribute
+                        WHERE attrelid = conrelid
+                        AND attname = 'order_number'
+                        AND attnum = ANY(conkey)
+                    )
+                LOOP
+                    EXECUTE format('ALTER TABLE orders DROP CONSTRAINT IF EXISTS %I', constraint_record.conname);
+                    RAISE NOTICE 'Dropped unique constraint: %', constraint_record.conname;
+                END LOOP;
+            END $$;
+            ]]>
+        </sql>
+        
+        <!-- Explicitly drop known constraint names as backup -->
+        <sql>
+            ALTER TABLE orders DROP CONSTRAINT IF EXISTS uk_orders_order_number;
+        </sql>
+        <sql>
+            ALTER TABLE orders DROP CONSTRAINT IF EXISTS uknthkiu7pgmnqnu86i2jyoe2v7;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

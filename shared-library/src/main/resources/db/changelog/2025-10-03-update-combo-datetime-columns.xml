@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="2025-10-03-update-combo-datetime-columns" author="system">
+        <comment>Update combo table datetime columns to support timezone (TIMESTAMPTZ)</comment>
+        
+        <!-- Update valid_from column to TIMESTAMPTZ -->
+        <sql>
+            ALTER TABLE combo 
+            ALTER COLUMN valid_from TYPE TIMESTAMPTZ;
+        </sql>
+        
+        <!-- Update valid_to column to TIMESTAMPTZ -->
+        <sql>
+            ALTER TABLE combo 
+            ALTER COLUMN valid_to TYPE TIMESTAMPTZ;
+        </sql>
+        
+        <rollback>
+            <!-- Rollback: Convert back to TIMESTAMP -->
+            <sql>
+                ALTER TABLE combo 
+                ALTER COLUMN valid_from TYPE TIMESTAMP;
+            </sql>
+            <sql>
+                ALTER TABLE combo 
+                ALTER COLUMN valid_to TYPE TIMESTAMP;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

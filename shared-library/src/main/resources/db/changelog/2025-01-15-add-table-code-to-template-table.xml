@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="add-table-code-to-template-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="template_table" columnName="table_code"/>
+            </not>
+        </preConditions>
+        
+        <comment>Add table_code column to template_table. Table codes must be unique within a template layout.</comment>
+        
+        <!-- Step 1: Add column as nullable first -->
+        <addColumn tableName="template_table">
+            <column name="table_code" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Step 2: Set a default value for existing rows (using a generated code) -->
+        <sql>
+            WITH numbered_tables AS (
+                SELECT 
+                    tt.id,
+                    'T' || LPAD(ROW_NUMBER() OVER (
+                        PARTITION BY tr.template_section_id 
+                        ORDER BY tt.table_order
+                    )::text, 3, '0') AS generated_code
+                FROM template_table tt
+                JOIN template_row tr ON tt.template_row_id = tr.id
+                WHERE tt.table_code IS NULL
+            )
+            UPDATE template_table
+            SET table_code = numbered_tables.generated_code
+            FROM numbered_tables
+            WHERE template_table.id = numbered_tables.id;
+        </sql>
+        
+        <!-- Step 3: Make column NOT NULL -->
+        <addNotNullConstraint tableName="template_table" columnName="table_code" columnDataType="VARCHAR(255)"/>
+        
+    </changeSet>
+
+</databaseChangeLog>
+

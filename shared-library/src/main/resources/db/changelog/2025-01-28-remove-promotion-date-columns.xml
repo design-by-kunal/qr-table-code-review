@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Remove valid_from column from promotion table -->
+    <changeSet id="20250128-1-remove-promotion-valid-from" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="promotion" columnName="valid_from"/>
+        </preConditions>
+        <dropColumn tableName="promotion" columnName="valid_from"/>
+    </changeSet>
+
+    <!-- Remove valid_to column from promotion table -->
+    <changeSet id="20250128-2-remove-promotion-valid-to" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="promotion" columnName="valid_to"/>
+        </preConditions>
+        <dropColumn tableName="promotion" columnName="valid_to"/>
+    </changeSet>
+
+</databaseChangeLog>

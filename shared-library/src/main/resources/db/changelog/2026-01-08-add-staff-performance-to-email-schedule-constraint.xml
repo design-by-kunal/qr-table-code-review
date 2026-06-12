@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop old constraint if it exists -->
+    <changeSet id="20260108-3-drop-constraint-for-staff-performance" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="email_schedule"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE email_schedule DROP CONSTRAINT IF EXISTS email_schedule_report_type_check;
+        </sql>
+    </changeSet>
+
+    <!-- Add updated check constraint for report_type enum values including STAFF_PERFORMANCE -->
+    <changeSet id="20260108-4-add-constraint-with-staff-performance" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="email_schedule"/>
+            <columnExists tableName="email_schedule" columnName="report_type"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE email_schedule ADD CONSTRAINT email_schedule_report_type_check 
+            CHECK (report_type::text = ANY (ARRAY[
+                'DASHBOARD_STATISTICS'::character varying,
+                'DISCOUNTS_OFFERS'::character varying,
+                'DISCOUNTS_PROMOTIONS'::character varying,
+                'ITEMIZED_SALES'::character varying,
+                'TABLE_WISE_SALES'::character varying,
+                'PAYMENT_TYPES_BREAKDOWN'::character varying,
+                'DAILY_SALES_SUMMARY'::character varying,
+                'TRANSACTIONS'::character varying,
+                'ORDERS'::character varying,
+                'SALES'::character varying,
+                'SALES_AND_REVENUE'::character varying,
+                'PAYMENT_AND_FINANCIAL'::character varying,
+                'MENU_PERFORMANCE'::character varying,
+                'EMPLOYEE_PERFORMANCE'::character varying,
+                'STAFF_PERFORMANCE'::character varying
+            ]::text[]));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

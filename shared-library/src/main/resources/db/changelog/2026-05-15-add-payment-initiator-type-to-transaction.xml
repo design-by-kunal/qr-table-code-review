@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <!-- 0 = cashier/staff initiated, 1 = customer self-pay (hosted card) -->
+    <changeSet id="2026-05-15-add-payment-initiator-type-to-transaction" author="cursor">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="transaction"/>
+                <not>
+                    <columnExists tableName="transaction" columnName="payment_initiator_type"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <addColumn tableName="transaction">
+            <column name="payment_initiator_type" type="smallint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

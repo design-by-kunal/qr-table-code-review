@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop the discount_schedule table since schedules are now only managed at menu assignment level -->
+    <changeSet id="20250128-3-drop-discount-schedule-table" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="discount_schedule"/>
+        </preConditions>
+        
+        <!-- Drop the table with cascade to handle any remaining dependencies -->
+        <dropTable tableName="discount_schedule" cascadeConstraints="true"/>
+    </changeSet>
+
+    <!-- Remove the schedules relationship from the Discount entity's @OneToMany mapping -->
+    <!-- This is handled in the Java code, not database migration -->
+
+</databaseChangeLog>

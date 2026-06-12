@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog 
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-08-29-allow-same-name-different-languages" author="shivani">
+
+        <!-- Drop the old global unique constraint (implemented as index) -->
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="uk_restaurant_group_translation_name_case_insensitive" schemaName="public"/>
+        </preConditions>
+        <dropIndex 
+            tableName="restaurant_group_translation" 
+            indexName="uk_restaurant_group_translation_name_case_insensitive"/>
+
+        <!-- Create a new unique index: 
+             - same name allowed across languages within the same group
+             - name cannot exist in other groups -->
+        <createIndex tableName="restaurant_group_translation" indexName="uniq_name_per_group_case_insensitive" unique="true">
+            <column name="restaurant_group_id"/>
+            <column name="name"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

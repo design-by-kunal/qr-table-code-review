@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!--
+        Remove obsolete alert time context columns now that backend no longer uses them.
+        Tables:
+          - restaurant.alert_time_context
+          - restaurant_group.alert_time_context
+    -->
+    <!-- Drop column from restaurant if it exists -->
+    <changeSet id="2026-01-29-remove-alert-time-context-restaurant" author="Josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant"/>
+                <columnExists tableName="restaurant" columnName="alert_time_context"/>
+            </and>
+        </preConditions>
+        <dropColumn tableName="restaurant" columnName="alert_time_context"/>
+    </changeSet>
+
+    <!-- Drop column from restaurant_group if it exists -->
+    <changeSet id="2026-01-29-remove-alert-time-context-restaurant-group" author="Josh">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <and>
+                <tableExists tableName="restaurant_group"/>
+                <columnExists tableName="restaurant_group" columnName="alert_time_context"/>
+            </and>
+        </preConditions>
+        <dropColumn tableName="restaurant_group" columnName="alert_time_context"/>
+    </changeSet>
+
+</databaseChangeLog>
+

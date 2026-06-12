@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-11-20-add-reason-to-ordered-item" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ordered_item" columnName="reason"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="ordered_item">
+            <column name="reason" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2025-11-20-add-reason-to-ordered-combo" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="ordered_combo" columnName="reason"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="ordered_combo">
+            <column name="reason" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
+

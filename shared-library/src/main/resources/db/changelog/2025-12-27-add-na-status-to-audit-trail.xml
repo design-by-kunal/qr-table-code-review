@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="2025-12-27-add-na-status-to-audit-trail" author="josh">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <tableExists tableName="audit_trail"/>
+            <columnExists tableName="audit_trail" columnName="status"/>
+        </preConditions>
+        <comment>Add NA status to audit_trail.status check constraint for non-request type actions</comment>
+        <sql>
+            -- Drop the old constraint first so updates can succeed
+            ALTER TABLE audit_trail DROP CONSTRAINT IF EXISTS audit_trail_status_check;
+        </sql>
+        <sql>
+            -- Create new constraint with NA included
+            -- Valid statuses: NONE, OPEN, APPROVED, DECLINED, NA (for non-request actions like LOGIN, LOGOUT, PAYMENT, etc.)
+            ALTER TABLE audit_trail 
+            ADD CONSTRAINT audit_trail_status_check 
+            CHECK (status IN ('NONE', 'OPEN', 'APPROVED', 'DECLINED', 'NA'));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Drop 'description' column if it exists -->
+    <changeSet id="2025-08-06-1-drop-description-if-exists" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="item_translation" columnName="description"/>
+        </preConditions>
+        <dropColumn tableName="item_translation" columnName="description"/>
+    </changeSet>
+
+    <!-- Add 'description' column -->
+    <changeSet id="2025-08-06-2-add-description-column" author="nitesh">
+        <addColumn tableName="item_translation">
+            <column name="description" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+<changeSet id="2025-08-07-fix-drop-language-id" author="nitesh">
+    <preConditions onFail="MARK_RAN">
+        <and>
+            <foreignKeyConstraintExists 
+                foreignKeyName="fko0dg6kptjtfhffjt3iprdrco1"/>
+            <columnExists tableName="item_translation" columnName="language_id"/>
+        </and>
+    </preConditions>
+
+    <dropForeignKeyConstraint 
+        baseTableName="item_translation" 
+        constraintName="fko0dg6kptjtfhffjt3iprdrco1"/>
+
+    <dropColumn 
+        tableName="item_translation" 
+        columnName="language_id"/>
+</changeSet>
+
+    <!-- Add 'language_code' column -->
+    <changeSet id="2025-08-06-5-add-language-code-column" author="nitesh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="item_translation" columnName="language_code"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="item_translation">
+            <column name="language_code" type="varchar(10)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Add deleted_reason column to users table -->
+    <changeSet id="20260125-1-add-deleted-reason-column" author="josh">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="deleted_reason"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="users">
+            <column name="deleted_reason" type="varchar(1000)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
