@@ -1,15 +1,17 @@
 package com.gulfnet.shared_library.security;
 
+import com.gulfnet.shared_library.exception.InvalidEncryptedPayloadException;
+
 import javax.crypto.Cipher;
 import java.security.PrivateKey;
 import java.util.Base64;
 
 public class RSAUtil {
 
-    private static final String RSA_ALGORITHM = "RSA/ECB/PKCS1Padding";
+    private static final String RSA_ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
 
     /**
-     * Decrypts RSA-encrypted data using the private key.
+     * Decrypts RSA-OAEP (SHA-256) encrypted data using the private key.
      *
      * @param encrypted Base64-encoded encrypted string
      * @param privateKey RSA private key
@@ -24,10 +26,8 @@ public class RSAUtil {
             byte[] decrypted = cipher.doFinal(decoded);
 
             return new String(decrypted);
-        } catch (javax.crypto.BadPaddingException e) {
-            throw new RuntimeException("RSA decryption failed: Invalid key or corrupted data", e);
         } catch (Exception e) {
-            throw new RuntimeException("RSA decryption failed: " + e.getMessage(), e);
+            throw new InvalidEncryptedPayloadException(e);
         }
     }
 }
